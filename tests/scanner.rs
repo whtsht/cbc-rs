@@ -1,40 +1,91 @@
-use cbc::{CBCParser, Rule};
+use cbc::{CBCScanner, Rule};
 use pest::Parser;
 
-pub fn test_one_token(rule: Rule, input: &str) -> Option<&str> {
-    let ret = CBCParser::parse(rule, input);
-    let ret = ret.ok()?.next()?.as_str();
+#[derive(Debug, PartialEq, Eq)]
+enum Token<'a> {
+    Some(&'a str),
+    None,
+    Remaining,
+    ParseError,
+}
+
+fn test_one_token<'a>(rule: Rule, input: &'a str) -> Token {
+    let ret: Result<pest::iterators::Pairs<Rule>, pest::error::Error<Rule>> =
+        CBCScanner::parse(rule, input);
+
+    let Ok(mut ret) = ret else {
+        return Token::ParseError;
+    };
+
+    let Some(ret) = ret.next().map(|r| r.as_str()) else {
+        return Token::None;
+    };
 
     if ret.len() == input.len() {
-        Some(ret)
+        Token::Some(ret)
     } else {
-        None
+        Token::Remaining
     }
 }
 
 #[test]
 fn identifier() {
-    assert!(test_one_token(Rule::IDENTIFIER, "foo").is_some());
-    assert!(test_one_token(Rule::IDENTIFIER, "__foo").is_some());
-    assert!(test_one_token(Rule::IDENTIFIER, "foo_bar34812").is_some());
+    assert_eq!(test_one_token(Rule::IDENTIFIER, "foo"), Token::Some("foo"));
+    assert_eq!(
+        test_one_token(Rule::IDENTIFIER, "__FOO"),
+        Token::Some("__FOO")
+    );
+    assert_eq!(
+        test_one_token(Rule::IDENTIFIER, "foo_bar34812"),
+        Token::Some("foo_bar34812")
+    );
 
-    assert!(test_one_token(Rule::IDENTIFIER, "0").is_none());
-    assert!(test_one_token(Rule::IDENTIFIER, "♥").is_none());
+    assert_eq!(test_one_token(Rule::IDENTIFIER, "0"), Token::ParseError);
+    assert_eq!(test_one_token(Rule::IDENTIFIER, "♥"), Token::ParseError);
 }
 
 #[test]
 fn reserved_words() {
-    assert!(test_one_token(Rule::KEYWORD, "void").is_some());
+    assert_eq!(test_one_token(Rule::KEYWORD, "void"), Token::Some("void"));
 }
 
 #[test]
 fn integer() {
-    assert!(test_one_token(Rule::INTEGER, "14328").is_some());
-    assert!(test_one_token(Rule::INTEGER, "0xa12c").is_some());
-    assert!(test_one_token(Rule::INTEGER, "0o1423762").is_some());
-    assert!(test_one_token(Rule::INTEGER, "0b011011011").is_some());
+    assert_eq!(test_one_token(Rule::INTEGER, "14328"), Token::Some("14328"));
+    assert_eq!(
+        test_one_token(Rule::INTEGER, "0xa12c"),
+        Token::Some("0xa12c")
+    );
+    assert_eq!(
+        test_one_token(Rule::INTEGER, "0o1423762"),
+        Token::Some("0o1423762")
+    );
+    assert_eq!(
+        test_one_token(Rule::INTEGER, "0b011011011"),
+        Token::Some("0b011011011")
+    );
 
-    assert!(test_one_token(Rule::INTEGER, "0xquienc").is_none());
-    assert!(test_one_token(Rule::INTEGER, "0o198619").is_none());
-    assert!(test_one_token(Rule::INTEGER, "0b011121241").is_none());
+    assert_eq!(test_one_token(Rule::INTEGER, "0xquienc"), Token::ParseError);
+    assert_eq!(test_one_token(Rule::INTEGER, "0o98619"), Token::ParseError);
+    assert_eq!(
+        test_one_token(Rule::INTEGER, "0b212410111"),
+        Token::ParseError
+    );
+}
+
+#[test]
+fn comment() {
+    assert_eq!(
+        test_one_token(Rule::LINE_COMMENT, "// hello world"),
+        Token::None
+    );
+    assert_eq!(
+        test_one_token(
+            Rule::BLOCK_COMMENT,
+            r#"/*
+        block comment
+        */"#
+        ),
+        Token::None
+    );
 }

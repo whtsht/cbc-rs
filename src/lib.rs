@@ -3,5 +3,5 @@ extern crate pest;
 extern crate pest_derive;
 
 #[derive(Parser)]
-#[grammar = "parser.pest"]
-pub struct CBCParser;
+#[grammar = "scanner.pest"]
+pub struct CBCScanner;
