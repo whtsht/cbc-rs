@@ -1,0 +1,70 @@
+IDENTIFIER = { ('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')* }
+
+VOID       = { "void" }
+CHAR       = { "char" }
+SHORT      = { "short" }
+INT        = { "int" }
+LONG       = { "long" }
+STRUCT     = { "struct" }
+UNION      = { "union" }
+ENUM       = { "enum" }
+STATIC     = { "static" }
+EXTERN     = { "extern" }
+CONST      = { "const" }
+SIGNED     = { "signed" }
+UNSIGNED   = { "unsigned" }
+IF         = { "if" }
+ELSE       = { "else" }
+SWITCH     = { "switch" }
+CASE       = { "case" }
+DEFAULT    = { "default" }
+WHILE      = { "while" }
+DO         = { "do" }
+FOR        = { "for" }
+RETURN     = { "return" }
+BREAK      = { "break" }
+CONTINUE   = { "continue" }
+GOTO       = { "goto" }
+TYPEDEF    = { "typedef" }
+IMPORT     = { "import" }
+SIZEOF     = { "sizeof" }
+
+KEYWORD = {
+    VOID      |
+    CHAR      |
+    SHORT     |
+    INT       |
+    LONG      |
+    STRUCT    |
+    UNION     |
+    ENUM      |
+    STATIC    |
+    EXTERN    |
+    CONST     |
+    SIGNED    |
+    UNSIGNED  |
+    IF        |
+    ELSE      |
+    SWITCH    |
+    CASE      |
+    DEFAULT   |
+    WHILE     |
+    DO        |
+    FOR       |
+    RETURN    |
+    BREAK     |
+    CONTINUE  |
+    GOTO      |
+    TYPEDEF   |
+    IMPORT    |
+    SIZEOF
+}
+
+INTEGER = {
+    '1'..'9' ~ ('0'..'9')* ~ "U"? ~ "L"? |
+    "0" ~ "x" ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ ~ "U"? ~ "L"? |
+    "0" ~ "o" ~ ('0'..'7')+ ~ "U"? ~ "L"? |
+    "0" ~ "b" ~ ("0" | "1")+ ~ "U"? ~ "L"?
+}
+
+file = { SOI ~ IDENTIFIER ~ EOI }
