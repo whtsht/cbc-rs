@@ -1,9 +1,7 @@
 LINE_COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
 BLOCK_COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
-IDENTIFIER = {
-    ('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')*
-}
+SP = _{ " " | "\t" }
 
 VOID       = { "void" }
 CHAR       = { "char" }
@@ -65,11 +63,17 @@ KEYWORD = {
     SIZEOF
 }
 
-INTEGER = {
+INTEGER = @{
     '1'..'9' ~ ('0'..'9')* ~ "U"? ~ "L"? |
     "0" ~ "x" ~ ('0'..'9' | 'a'..'f' | 'A'..'F')+ ~ "U"? ~ "L"? |
     "0" ~ "o" ~ ('0'..'7')+ ~ "U"? ~ "L"? |
     "0" ~ "b" ~ ("0" | "1")+ ~ "U"? ~ "L"?
 }
+
+IDENTIFIER = @{
+    ('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')*
+}
+
+IMPORT_STATEMENT = @{ IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ ";" }
 
 file = { SOI ~ IDENTIFIER ~ EOI }
