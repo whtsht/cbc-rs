@@ -32,35 +32,35 @@ TYPEDEF    = { "typedef" }
 IMPORT     = { "import" }
 SIZEOF     = { "sizeof" }
 
-KEYWORD = {
-    VOID      |
-    CHAR      |
-    SHORT     |
-    INT       |
-    LONG      |
-    STRUCT    |
-    UNION     |
-    ENUM      |
-    STATIC    |
-    EXTERN    |
-    CONST     |
-    SIGNED    |
-    UNSIGNED  |
-    IF        |
-    ELSE      |
-    SWITCH    |
-    CASE      |
-    DEFAULT   |
-    WHILE     |
-    DO        |
-    FOR       |
-    RETURN    |
-    BREAK     |
-    CONTINUE  |
-    GOTO      |
-    TYPEDEF   |
-    IMPORT    |
-    SIZEOF
+KEYWORD = _{
+      VOID
+    | CHAR
+    | SHORT
+    | INT
+    | LONG
+    | STRUCT
+    | UNION
+    | ENUM
+    | STATIC
+    | EXTERN
+    | CONST
+    | SIGNED
+    | UNSIGNED
+    | IF
+    | ELSE
+    | SWITCH
+    | CASE
+    | DEFAULT
+    | WHILE
+    | DO
+    | FOR
+    | RETURN
+    | BREAK
+    | CONTINUE
+    | GOTO
+    | TYPEDEF
+    | IMPORT
+    | SIZEOF
 }
 
 INTEGER = @{
@@ -71,9 +71,58 @@ INTEGER = @{
 }
 
 IDENTIFIER = @{
-    ('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')*
+    (('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')*)
+}
+
+TOKEN = _{
+      KEYWORD
+    | IDENTIFIER
+}
+
+TYPEREF_BASE = {
+     VOID
+   | CHAR
+   | SHORT
+   | INT
+   | LONG
+   | UNSIGNED ~ CHAR
+   | UNSIGNED ~ SHORT
+   | UNSIGNED ~ INT
+   | UNSIGNED ~ LONG
+   | STRUCT ~ IDENTIFIER
+   | UNION ~ IDENTIFIER
+   | IDENTIFIER
+}
+
+NAME = { IDENTIFIER }
+
+TYPEREF = { TYPEREF_BASE ~ (
+      "[" ~ "]"
+    | "[" ~ INTEGER ~ "]"
+    | "*"
+    | "(" ~ PARAMS ~ ")"
+    )*
+}
+
+TYPE = { TYPEREF }
+
+PARAM = {
+    TYPE ~ NAME
+}
+
+FIXED_PARAMS = {
+    PARAM ~ ("," ~ PARAM)*
+}
+
+PARAMS = {
+      VOID
+    | FIXED_PARAMS ~ ("," ~ "...")?
 }
 
 IMPORT_STATEMENT = @{ IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ ";" }
 
-file = { SOI ~ IDENTIFIER ~ EOI }
+STORAGE = { STATIC? }
+
+DEF_FUNCTION = { STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ ";"}
+
+FILE = { SOI ~ IDENTIFIER ~ EOI }

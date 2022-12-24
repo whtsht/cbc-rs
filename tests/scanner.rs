@@ -35,6 +35,10 @@ fn identifier() {
         Token::Some("foo", Rule::IDENTIFIER)
     );
     assert_eq!(
+        test_one_token(Rule::IDENTIFIER, "jasdfjoiqwefsdaf3812u2u390 o23ur"),
+        Token::Remaining("jasdfjoiqwefsdaf3812u2u390", " o23ur", Rule::IDENTIFIER)
+    );
+    assert_eq!(
         test_one_token(Rule::IDENTIFIER, "__FOO"),
         Token::Some("__FOO", Rule::IDENTIFIER)
     );
@@ -45,13 +49,17 @@ fn identifier() {
 
     assert_eq!(test_one_token(Rule::IDENTIFIER, "0"), Token::ParseError);
     assert_eq!(test_one_token(Rule::IDENTIFIER, "♥"), Token::ParseError);
+    assert_eq!(
+        test_one_token(Rule::TOKEN, "void"),
+        Token::Some("void", Rule::VOID)
+    );
 }
 
 #[test]
 fn reserved_words() {
     assert_eq!(
         test_one_token(Rule::KEYWORD, "void"),
-        Token::Some("void", Rule::KEYWORD)
+        Token::Some("void", Rule::VOID)
     );
 }
 
@@ -112,5 +120,41 @@ fn import_statement() {
     assert_eq!(
         test_one_token(Rule::IMPORT_STATEMENT, "importnet;"),
         Token::ParseError
+    );
+}
+
+#[test]
+fn params() {
+    assert_eq!(
+        test_one_token(Rule::PARAMS, "void"),
+        Token::Some("void", Rule::PARAMS)
+    );
+    assert_eq!(
+        test_one_token(Rule::PARAMS, "int foo, long bar, char _foo_bar"),
+        Token::Some("int foo, long bar, char _foo_bar", Rule::PARAMS)
+    );
+    assert_eq!(
+        test_one_token(Rule::PARAMS, "unsigned short a, unsigned long b"),
+        Token::Some("unsigned short a, unsigned long b", Rule::PARAMS)
+    );
+    assert_eq!(
+        test_one_token(Rule::PARAMS, "union shape sphere, struct point x"),
+        Token::Some("union shape sphere, struct point x", Rule::PARAMS)
+    );
+    assert_eq!(
+        test_one_token(Rule::PARAMS, "int[5] a, char *b"),
+        Token::Some("int[5] a, char *b", Rule::PARAMS)
+    );
+    assert_eq!(
+        test_one_token(Rule::PARAMS, "char *format"),
+        Token::Some("char *format", Rule::PARAMS)
+    );
+}
+
+#[test]
+fn def_function() {
+    assert_eq!(
+        test_one_token(Rule::DEF_FUNCTION, "int add(int x, int y);"),
+        Token::Some("int add(int x, int y);", Rule::DEF_FUNCTION)
     );
 }
