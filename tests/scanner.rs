@@ -157,4 +157,40 @@ fn def_function() {
         test_one_token(Rule::DEF_FUNCTION, "int add(int x, int y);"),
         Token::Some("int add(int x, int y);", Rule::DEF_FUNCTION)
     );
+    assert_eq!(
+        test_one_token(Rule::DEF_FUNCTION, "int add(x, y)"),
+        Token::ParseError
+    );
+}
+
+#[test]
+fn member_list() {
+    assert_eq!(
+        test_one_token(Rule::MEMBER_LIST, "{ int x; long y; short z; }"),
+        Token::Some("{ int x; long y; short z; }", Rule::MEMBER_LIST)
+    );
+}
+
+#[test]
+fn def_struct() {
+    assert_eq!(
+        test_one_token(Rule::DEF_STRUCT, "struct point { int x; int y; }"),
+        Token::Some("struct point { int x; int y; }", Rule::DEF_STRUCT)
+    );
+}
+
+#[test]
+fn def_union() {
+    assert_eq!(
+        test_one_token(Rule::DEF_UNION, "union value { int i; float f; }"),
+        Token::Some("union value { int i; float f; }", Rule::DEF_UNION)
+    );
+}
+
+#[test]
+fn def_type() {
+    assert_eq!(
+        test_one_token(Rule::DEF_TYPE, "typedef struct point Point;"),
+        Token::Some("typedef struct point Point;", Rule::DEF_TYPE)
+    );
 }

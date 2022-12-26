@@ -119,10 +119,42 @@ PARAMS = {
     | FIXED_PARAMS ~ ("," ~ "...")?
 }
 
-IMPORT_STATEMENT = @{ IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ ";" }
+DEF_VAR_LIST = { "" }
+
+STMTS = { "" }
+
+BLOCK = {
+    "{" ~ DEF_VAR_LIST ~ STMTS ~ "}"
+}
+
+DEF_FUNCTION = {
+    STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ ";"
+}
+
+SLOT = {
+    TYPE ~ NAME
+}
+
+MEMBER_LIST = {
+    "{" ~ (SLOT ~ ";")* ~ "}"
+}
+
+DEF_STRUCT = {
+    STRUCT ~ NAME ~ MEMBER_LIST
+}
+
+DEF_UNION = {
+    UNION ~ NAME ~ MEMBER_LIST
+}
+
+DEF_TYPE = {
+    TYPEDEF ~ TYPEREF ~ IDENTIFIER ~ ";"
+}
+
+IMPORT_STATEMENT = @{
+    IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ ";"
+}
 
 STORAGE = { STATIC? }
-
-DEF_FUNCTION = { STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ ";"}
 
 FILE = { SOI ~ IDENTIFIER ~ EOI }
