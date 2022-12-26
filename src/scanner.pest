@@ -119,9 +119,119 @@ PARAMS = {
     | FIXED_PARAMS ~ ("," ~ "...")?
 }
 
-DEF_VAR_LIST = { "" }
+DEF_VAR = { NAME ~ ";" }
 
-STMTS = { "" }
+DEF_VAR_LIST = { (DEF_VAR)* }
+
+
+CHARACTER = { "'" ~ ASCII_ALPHA ~ "'" }
+
+STRING = { "\"" ~ ASCII_ALPHA* ~ "\""}
+
+PRIMARY = {
+      INTEGER
+    | CHARACTER
+    | STRING
+    | IDENTIFIER
+    | "(" ~ EXPR ~ ")"
+}
+
+UNARY = {
+      ("++" | "--") ~ UNARY
+    | ("+" | "-" | "!" | "~" | "*" | "&") ~ TERM
+    | SIZEOF ~ "(" ~ TYPE ~ ")"
+    | SIZEOF ~ UNARY
+    | POSTFIX
+}
+
+POSTFIX = {
+      PRIMARY ~ (
+        "++"
+      | "--"
+      | "." ~ NAME
+      | "->" ~ NAME
+      | "[" ~ EXPR ~ "]"
+      | "(" ~ ARGS ~ ")"
+      )*
+}
+
+ARGS = {
+    EXPR ~ ("," ~ EXPR)*
+}
+
+TERM = {
+    "(" ~ TYPE ~ ")" ~ TERM | UNARY
+}
+
+OPASSIGN_OP = {
+      "+="
+    | "-="
+    | "*="
+    | "/="
+    | "%="
+    | "&="
+    | "|="
+    | "^="
+    | "<<="
+    | ">>="
+}
+
+EXPR = {
+      TERM ~ "=" ~ EXPR
+    | TERM ~ OPASSIGN_OP ~ EXPR
+    | EXPR10
+}
+
+EXPR10 = {
+    EXPR9 ~ ("?" ~ EXPR ~ ":" ~ EXPR10)?
+}
+
+EXPR9 = {
+    EXPR8 ~ ("||" ~ EXPR8)*
+}
+
+EXPR8 = {
+    EXPR7 ~ ("&&" ~ EXPR7)*
+}
+
+EXPR7 = {
+    EXPR6 ~ ((">" | "<" | ">=" | "<=" | "==" | "!=") ~ EXPR6)*
+}
+
+EXPR6 = {
+    EXPR5 ~ ("|" ~ EXPR5)*
+}
+
+EXPR5 = {
+    EXPR4 ~ ("^" ~ EXPR4)*
+}
+
+EXPR4 = {
+    EXPR3 ~ ("&" ~ EXPR3)*
+}
+
+EXPR3 = {
+    EXPR2 ~ ((">>" | "<<") ~ EXPR2)*
+}
+
+EXPR2 = {
+    EXPR1 ~ (("+" | "-") ~ EXPR1)*
+}
+
+EXPR1 = {
+    TERM ~ (("*" | "/" | "%") ~ TERM)*
+}
+
+IF_STMT = {
+    IF ~ "(" ~ EXPR ~ ")" ~ STMTS ~ ELSE ~ STMTS
+}
+
+STMTS = {
+      ";"
+    | EXPR
+    | BLOCK
+    | IF_STMT
+}
 
 BLOCK = {
     "{" ~ DEF_VAR_LIST ~ STMTS ~ "}"

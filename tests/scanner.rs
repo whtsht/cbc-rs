@@ -194,3 +194,75 @@ fn def_type() {
         Token::Some("typedef struct point Point;", Rule::DEF_TYPE)
     );
 }
+
+#[test]
+fn primary() {
+    assert_eq!(
+        test_one_token(Rule::PRIMARY, "0x126"),
+        Token::Some("0x126", Rule::PRIMARY)
+    );
+    assert_eq!(
+        test_one_token(Rule::PRIMARY, r#""Hello""#),
+        Token::Some(r#""Hello""#, Rule::PRIMARY)
+    );
+    assert_eq!(
+        test_one_token(Rule::PRIMARY, "'a'"),
+        Token::Some("'a'", Rule::PRIMARY)
+    );
+    assert_eq!(
+        test_one_token(Rule::PRIMARY, "abc_def"),
+        Token::Some("abc_def", Rule::PRIMARY)
+    );
+}
+
+#[test]
+fn postfix() {
+    assert_eq!(
+        test_one_token(Rule::POSTFIX, "foo++"),
+        Token::Some("foo++", Rule::POSTFIX)
+    );
+    assert_eq!(
+        test_one_token(Rule::POSTFIX, "foo->length"),
+        Token::Some("foo->length", Rule::POSTFIX)
+    );
+}
+
+#[test]
+fn unary() {
+    assert_eq!(
+        test_one_token(Rule::UNARY, "--_foo"),
+        Token::Some("--_foo", Rule::UNARY)
+    );
+    assert_eq!(
+        test_one_token(Rule::UNARY, "!bar"),
+        Token::Some("!bar", Rule::UNARY)
+    );
+}
+
+#[test]
+fn args() {
+    assert_eq!(
+        test_one_token(Rule::ARGS, "a, b, 13"),
+        Token::Some("a, b, 13", Rule::ARGS)
+    );
+}
+
+#[test]
+fn term() {
+    assert_eq!(
+        test_one_token(Rule::TERM, "(int)f"),
+        Token::Some("(int)f", Rule::TERM)
+    );
+    assert_eq!(
+        test_one_token(Rule::TERM, "1"),
+        Token::Some("1", Rule::TERM)
+    );
+}
+
+#[test]
+fn expr() {
+    assert_eq!(
+        test_one_token(Rule::EXPR, "2 * 3 + 4 + 6 || b"),
+        Token::Some("2 * 3 + 4 + 6 || b", Rule::EXPR)
+    );
+}
