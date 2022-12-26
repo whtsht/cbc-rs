@@ -82,11 +82,17 @@ fn integer() {
         Token::Some("0b011011011", Rule::INTEGER)
     );
 
-    assert_eq!(test_one_token(Rule::INTEGER, "0xquienc"), Token::ParseError);
-    assert_eq!(test_one_token(Rule::INTEGER, "0o98619"), Token::ParseError);
+    assert_eq!(
+        test_one_token(Rule::INTEGER, "0xquienc"),
+        Token::Remaining("0", "xquienc", Rule::INTEGER)
+    );
+    assert_eq!(
+        test_one_token(Rule::INTEGER, "0o98619"),
+        Token::Remaining("0", "o98619", Rule::INTEGER)
+    );
     assert_eq!(
         test_one_token(Rule::INTEGER, "0b212410111"),
-        Token::ParseError
+        Token::Remaining("0", "b212410111", Rule::INTEGER)
     );
 }
 
@@ -198,6 +204,10 @@ fn def_type() {
 #[test]
 fn primary() {
     assert_eq!(
+        test_one_token(Rule::PRIMARY, "0"),
+        Token::Some("0", Rule::PRIMARY)
+    );
+    assert_eq!(
         test_one_token(Rule::PRIMARY, "0x126"),
         Token::Some("0x126", Rule::PRIMARY)
     );
@@ -264,5 +274,44 @@ fn expr() {
     assert_eq!(
         test_one_token(Rule::EXPR, "2 * 3 + 4 + 6 || b"),
         Token::Some("2 * 3 + 4 + 6 || b", Rule::EXPR)
+    );
+}
+
+#[test]
+fn stmts() {
+    assert_eq!(
+        test_one_token(Rule::BLOCK, "{}"),
+        Token::Some("{}", Rule::BLOCK)
+    );
+
+    assert_eq!(
+        test_one_token(Rule::IF_STMT, "if (a == b) { a += 1; } else { a = b; }"),
+        Token::Some("if (a == b) { a += 1; } else { a = b; }", Rule::IF_STMT)
+    );
+
+    assert_eq!(
+        test_one_token(Rule::IF_STMT, "if (a == b) { a += 1; } else { a = b; }"),
+        Token::Some("if (a == b) { a += 1; } else { a = b; }", Rule::IF_STMT)
+    );
+
+    assert_eq!(
+        test_one_token(Rule::WHILE_STMT, "while (counter > 0) counter--;"),
+        Token::Some("while (counter > 0) counter--;", Rule::WHILE_STMT)
+    );
+
+    assert_eq!(
+        test_one_token(
+            Rule::DOWHILE_STMT,
+            "do { counter += 1; } while (counter <= 10);"
+        ),
+        Token::Some(
+            "do { counter += 1; } while (counter <= 10);",
+            Rule::DOWHILE_STMT
+        )
+    );
+
+    assert_eq!(
+        test_one_token(Rule::FOR_STMT, "for (i = 0; i < 100; i++) { sum += i; }"),
+        Token::Some("for (i = 0; i < 100; i++) { sum += i; }", Rule::FOR_STMT)
     );
 }
