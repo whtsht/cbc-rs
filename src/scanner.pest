@@ -3,36 +3,37 @@ BLOCK_COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 SP = _{ " " | "\t" }
 
-VOID       = { "void" }
-CHAR       = { "char" }
-SHORT      = { "short" }
-INT        = { "int" }
-LONG       = { "long" }
-STRUCT     = { "struct" }
-UNION      = { "union" }
-ENUM       = { "enum" }
-STATIC     = { "static" }
-EXTERN     = { "extern" }
-CONST      = { "const" }
-SIGNED     = { "signed" }
-UNSIGNED   = { "unsigned" }
-IF         = { "if" }
-ELSE       = { "else" }
-SWITCH     = { "switch" }
-CASE       = { "case" }
-DEFAULT    = { "default" }
-WHILE      = { "while" }
-DO         = { "do" }
-FOR        = { "for" }
-RETURN     = { "return" }
-BREAK      = { "break" }
-CONTINUE   = { "continue" }
-GOTO       = { "goto" }
-TYPEDEF    = { "typedef" }
-IMPORT     = { "import" }
-SIZEOF     = { "sizeof" }
+VOID       = @{ "void" }
+CHAR       = @{ "char" }
+SHORT      = @{ "short" }
+INT        = @{ "int" }
+LONG       = @{ "long" }
+STRUCT     = @{ "struct" }
+UNION      = @{ "union" }
+ENUM       = @{ "enum" }
+STATIC     = @{ "static" }
+EXTERN     = @{ "extern" }
+CONST      = @{ "const" }
+SIGNED     = @{ "signed" }
+UNSIGNED   = @{ "unsigned" }
+IF         = @{ "if" }
+ELSE       = @{ "else" }
+SWITCH     = @{ "switch" }
+CASE       = @{ "case" }
+DEFAULT    = @{ "default" }
+WHILE      = @{ "while" }
+DO         = @{ "do" }
+FOR        = @{ "for" }
+RETURN     = @{ "return" }
+BREAK      = @{ "break" }
+CONTINUE   = @{ "continue" }
+GOTO       = @{ "goto" }
+TYPEDEF    = @{ "typedef" }
+IMPORT     = @{ "import" }
+SIZEOF     = @{ "sizeof" }
 
 KEYWORD = _{
+    (
       VOID
     | CHAR
     | SHORT
@@ -61,6 +62,8 @@ KEYWORD = _{
     | TYPEDEF
     | IMPORT
     | SIZEOF
+    ) ~
+    !ANY
 }
 
 INTEGER = @{
@@ -72,12 +75,7 @@ INTEGER = @{
 }
 
 IDENTIFIER = @{
-    (('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')*)
-}
-
-TOKEN = _{
-      KEYWORD
-    | IDENTIFIER
+    !KEYWORD ~ (('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')*)
 }
 
 TYPEREF_BASE = {

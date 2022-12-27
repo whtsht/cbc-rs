@@ -50,9 +50,14 @@ fn identifier() {
     assert_eq!(test_one_token(Rule::IDENTIFIER, "0"), Token::ParseError);
     assert_eq!(test_one_token(Rule::IDENTIFIER, "♥"), Token::ParseError);
     assert_eq!(
-        test_one_token(Rule::TOKEN, "void"),
-        Token::Some("void", Rule::VOID)
+        test_one_token(Rule::IDENTIFIER, "voidfunction"),
+        Token::Some("voidfunction", Rule::IDENTIFIER)
     );
+    assert_eq!(
+        test_one_token(Rule::IDENTIFIER, "_void"),
+        Token::Some("_void", Rule::IDENTIFIER)
+    );
+    assert_eq!(test_one_token(Rule::IDENTIFIER, "void"), Token::ParseError);
 }
 
 #[test]
