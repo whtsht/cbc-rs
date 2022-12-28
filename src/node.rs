@@ -83,6 +83,8 @@ pub enum PrimaryNode {
 pub fn parse(src: &str) -> Result<Vec<Node>, pest::error::Error<Rule>> {
     let mut nodes = vec![];
     let pairs = CBCScanner::parse(Rule::EXPR, src)?;
+
+    println!("{:#?}", pairs);
     for pair in pairs {
         match pair.as_rule() {
             Rule::EXPR => nodes.push(parse_unary_node(pair.into_inner().next().unwrap())),
@@ -152,8 +154,26 @@ pub fn parse_primary_node(pair: Pair<Rule>) -> Node {
     }
 }
 
+pub fn parse_args_node(pair: Pair<Rule>) -> Node {
+    todo!()
+}
+
+pub fn parse_term_node(pair: Pair<Rule>) -> Node {
+    todo!()
+}
+
+pub fn parse_type_node(pair: Pair<Rule>) -> Node {
+    todo!()
+}
+
+pub fn parse_typebase_node(pair: Pair<Rule>) -> Node {
+    todo!()
+}
+
 #[test]
 fn test_parse() {
     assert!(parse("++1").is_ok());
-    assert!(parse("1++").is_ok())
+    assert!(parse("1++").is_ok());
+    let pairs = CBCScanner::parse(Rule::DEF_VAR, "int a;").unwrap();
+    println!("{:#?}", pairs);
 }

@@ -121,15 +121,15 @@ fn comment() {
 #[test]
 fn import_statement() {
     assert_eq!(
-        test_one_token(Rule::IMPORT_STATEMENT, "import stdio;"),
-        Token::Some("import stdio;", Rule::IMPORT_STATEMENT)
+        test_one_token(Rule::IMPORT_STMT, "import stdio;"),
+        Token::Some("import stdio;", Rule::IMPORT_STMT)
     );
     assert_eq!(
-        test_one_token(Rule::IMPORT_STATEMENT, "import sys.types;"),
-        Token::Some("import sys.types;", Rule::IMPORT_STATEMENT)
+        test_one_token(Rule::IMPORT_STMT, "import sys.types;"),
+        Token::Some("import sys.types;", Rule::IMPORT_STMT)
     );
     assert_eq!(
-        test_one_token(Rule::IMPORT_STATEMENT, "importnet;"),
+        test_one_token(Rule::IMPORT_STMT, "importnet;"),
         Token::ParseError
     );
 }

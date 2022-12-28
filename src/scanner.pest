@@ -158,7 +158,7 @@ PARAMS = {
     | FIXED_PARAMS ~ ("," ~ "...")?
 }
 
-DEF_VAR = { NAME ~ ";" }
+DEF_VAR = { SLOT ~ ";" }
 
 DEF_VAR_LIST = { DEF_VAR* }
 
@@ -198,7 +198,7 @@ ARGS = {
     EXPR ~ ("," ~ EXPR)*
 }
 
-TERM = _{
+TERM = {
     "(" ~ TYPE ~ ")" ~ TERM | UNARY
 }
 
@@ -331,6 +331,7 @@ GOTO_STMT = { GOTO ~ IDENTIFIER ~ ";" }
 
 RETURN_STMT = { RETURN ~ ";" }
 
+STORAGE = { STATIC? }
 DEF_FUNCTION = {
     STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ ";"
 }
@@ -355,10 +356,27 @@ DEF_TYPE = {
     TYPEDEF ~ TYPEREF ~ IDENTIFIER ~ ";"
 }
 
-IMPORT_STATEMENT = @{
+IMPORT_STMT = @{
     IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ ";"
 }
 
-STORAGE = { STATIC? }
+IMPORT_STMTS = { IMPORT_STMT* }
 
-FILE = { SOI ~ IDENTIFIER ~ EOI }
+DEF_CONST = {
+    TYPE ~ NAME ~ (EQ ~ EXPR)?
+}
+
+DEF_VARS = {
+    STORAGE ~ TYPE ~ NAME ~ (EQ ~ EXPR)?
+}
+
+TOP_DEF = {
+      DEF_UNION
+    | DEF_STRUCT
+    | DEF_CONST
+    | DEF_FUNCTION
+    | DEF_VARS
+    | DEF_TYPE
+}
+
+FILE = { SOI ~ IMPORT_STMTS ~ TOP_DEF ~ EOI }
