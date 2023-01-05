@@ -1,8 +1,12 @@
 #![allow(dead_code)]
-use pest::{iterators::Pair, Parser};
+use pest::iterators::Pair;
+use std::iter::Peekable;
+
+use pest::{iterators::Pairs, Parser};
 
 use crate::{CBCScanner, Rule};
 
+pub const SIZEOF: &str = "sizeof";
 pub const PLUS: &str = "+";
 pub const MINUS: &str = "-";
 pub const STAR: &str = "*";
@@ -45,12 +49,27 @@ pub enum Node {
     SuffixOp(Box<SuffixOpNode>),
     PrefixOp(Box<PrefixOpNode>),
     Primary(Box<PrimaryNode>),
+    TypeBase(Box<TypeBaseNode>),
+    SizeofExprNode(Box<SizeofExprNode>),
+    SizeofTypeNode(Box<SizeofTypeNode>),
 }
 
 #[derive(Debug)]
-pub enum UnaryOpNode {
-    Suffix(SuffixOpNode),
-    Prefix(PrefixOpNode),
+pub struct NodeError {
+    _type: NodeErrorType,
+    message: String,
+}
+
+#[derive(Debug)]
+pub enum NodeErrorType {
+    Token,
+    BinaryOp,
+    SuffixOp,
+    PrefixOp,
+    Primary,
+    TypeBase,
+    SizeofExprNode,
+    SizeofTypeNode,
 }
 
 #[derive(Debug)]
@@ -73,6 +92,16 @@ pub struct BinaryOpNode {
 }
 
 #[derive(Debug)]
+pub struct SizeofExprNode {
+    pub expr: Node,
+}
+
+#[derive(Debug)]
+pub struct SizeofTypeNode {
+    pub _type: Node,
+}
+
+#[derive(Debug)]
 pub enum PrimaryNode {
     Integer(i64),
     String(String),
@@ -80,14 +109,34 @@ pub enum PrimaryNode {
     Identifier(String),
 }
 
-pub fn parse(src: &str) -> Result<Vec<Node>, pest::error::Error<Rule>> {
-    let mut nodes = vec![];
-    let pairs = CBCScanner::parse(Rule::EXPR, src)?;
+#[derive(Debug)]
+pub enum TypeBaseNode {
+    Void,
+    Char,
+    Short,
+    Int,
+    Long,
+    UnsignedChar,
+    UnsignedShort,
+    UnsignedInt,
+    UnsignedLong,
+    Struct(String),
+    Union(String),
+    Identifier(String),
+}
 
-    println!("{:#?}", pairs);
+pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
+    let mut nodes = vec![];
+    let pairs = CBCScanner::parse(Rule::EXPR, src).or_else(|_| {
+        Err(NodeError {
+            _type: NodeErrorType::Token,
+            message: String::from("failed to scan"),
+        })
+    })?;
+
     for pair in pairs {
         match pair.as_rule() {
-            Rule::EXPR => nodes.push(parse_unary_node(pair.into_inner().next().unwrap())),
+            Rule::EXPR => nodes.push(parse_unary_node(pair.into_inner().peekable())?),
             _ => {}
         }
     }
@@ -95,45 +144,51 @@ pub fn parse(src: &str) -> Result<Vec<Node>, pest::error::Error<Rule>> {
     Ok(nodes)
 }
 
-pub fn parse_unary_node(pair: Pair<Rule>) -> Node {
-    parse_prefix_node(pair)
+pub fn parse_unary_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
+    let pairs = pairs.next().unwrap().into_inner().peekable();
+    Ok(parse_prefix_node(pairs)?)
 }
 
-pub fn parse_prefix_node(pair: Pair<Rule>) -> Node {
-    let mut pair = pair.into_inner().peekable();
-    match pair.peek().unwrap().as_str() {
-        PPLUS => Node::PrefixOp(Box::new(PrefixOpNode {
+pub fn parse_prefix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
+    let ret = match pairs.peek().unwrap().as_rule() {
+        Rule::PPLUS => Node::PrefixOp(Box::new(PrefixOpNode {
             operator: PPLUS,
-            expr: parse_unary_node(pair.nth(1).unwrap()),
+            expr: parse_unary_node(pairs.nth(1).unwrap().into_inner().peekable())?,
         })),
-        MMINUS => Node::PrefixOp(Box::new(PrefixOpNode {
+        Rule::MMINUS => Node::PrefixOp(Box::new(PrefixOpNode {
             operator: MMINUS,
-            expr: parse_unary_node(pair.nth(1).unwrap()),
+            expr: parse_unary_node(pairs.nth(1).unwrap().into_inner().peekable())?,
         })),
-        _ => parse_suffix_node(pair.nth(0).unwrap()),
-    }
+        Rule::SIZEOF => {
+            pairs.next();
+            parse_sizeof_node(pairs)?
+        }
+        _ => parse_suffix_node(pairs.next().unwrap().into_inner().peekable())?,
+    };
+    Ok(ret)
 }
 
-pub fn parse_suffix_node(pair: Pair<Rule>) -> Node {
-    let mut pair = pair.into_inner();
-    let expr = pair.next().unwrap();
-    match pair.next().map(|x| x.as_str()) {
-        Some(PPLUS) => Node::SuffixOp(Box::new(SuffixOpNode {
+pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
+    let first = pairs.next().unwrap();
+    let second = pairs.next();
+
+    let node = match second.map(|x| x.as_rule()) {
+        Some(Rule::PPLUS) => Node::SuffixOp(Box::new(SuffixOpNode {
             operator: PPLUS,
-            expr: parse_primary_node(expr),
+            expr: parse_primary_node(first.into_inner().next().unwrap())?,
         })),
-        Some(MMINUS) => Node::SuffixOp(Box::new(SuffixOpNode {
+        Some(Rule::MMINUS) => Node::SuffixOp(Box::new(SuffixOpNode {
             operator: MMINUS,
-            expr: parse_primary_node(expr),
+            expr: parse_primary_node(first.into_inner().next().unwrap())?,
         })),
-        Some(_) => todo!(),
-        None => parse_primary_node(expr),
-    }
+        _ => parse_primary_node(first)?,
+    };
+
+    Ok(node)
 }
 
-pub fn parse_primary_node(pair: Pair<Rule>) -> Node {
-    let pair = pair.into_inner().next().unwrap();
-    match pair.as_rule() {
+pub fn parse_primary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+    let node = match pair.as_rule() {
         Rule::INTEGER => {
             let n = pair.as_str().parse().unwrap();
             Node::Primary(Box::new(PrimaryNode::Integer(n)))
@@ -151,29 +206,83 @@ pub fn parse_primary_node(pair: Pair<Rule>) -> Node {
             Node::Primary(Box::new(PrimaryNode::Identifier(s)))
         }
         _ => panic!("not primary, found {:?}", pair.as_rule()),
+    };
+
+    Ok(node)
+}
+
+pub fn parse_sizeof_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
+    let node = match pairs.peek().unwrap().as_rule() {
+        Rule::LBRACKET => {
+            let node = Node::SizeofTypeNode(Box::new(SizeofTypeNode {
+                _type: parse_type_node(pairs.nth(1).unwrap().into_inner().peekable())?,
+            }));
+            pairs.next().unwrap(); // Skip the right bracket
+            node
+        }
+        Rule::UNARY => Node::SizeofExprNode(Box::new(SizeofExprNode {
+            expr: parse_unary_node(pairs.next().unwrap().into_inner().peekable())?,
+        })),
+        err => panic!("sizeof error: {:?}", err),
+    };
+
+    Ok(node)
+}
+
+// pub fn parse_args_node(pair: Pair<Rule>) -> Node {
+//     todo!()
+// }
+
+// pub fn parse_term_node(pair: Pair<Rule>) -> Node {
+//     todo!()
+// }
+
+pub fn parse_type_node(pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
+    parse_typebase_node(pairs)
+}
+
+pub fn parse_typebase_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
+    let mut pairs = pairs.next().unwrap().into_inner();
+    let first = pairs.next().unwrap();
+    let second = pairs.peek();
+    match (first.as_rule(), second.map(|x| x.as_rule())) {
+        (Rule::VOID, None) => Ok(Node::TypeBase(Box::new(TypeBaseNode::Void))),
+        (Rule::CHAR, None) => Ok(Node::TypeBase(Box::new(TypeBaseNode::Char))),
+        (Rule::SHORT, None) => Ok(Node::TypeBase(Box::new(TypeBaseNode::Short))),
+        (Rule::INT, None) => Ok(Node::TypeBase(Box::new(TypeBaseNode::Int))),
+        (Rule::LONG, None) => Ok(Node::TypeBase(Box::new(TypeBaseNode::Long))),
+        (Rule::UNSIGNED, Some(Rule::CHAR)) => {
+            pairs.next();
+            Ok(Node::TypeBase(Box::new(TypeBaseNode::UnsignedChar)))
+        }
+        (Rule::UNSIGNED, Some(Rule::SHORT)) => {
+            pairs.next();
+            Ok(Node::TypeBase(Box::new(TypeBaseNode::UnsignedShort)))
+        }
+        (Rule::UNSIGNED, Some(Rule::INT)) => {
+            pairs.next();
+            Ok(Node::TypeBase(Box::new(TypeBaseNode::UnsignedInt)))
+        }
+        (Rule::UNSIGNED, Some(Rule::LONG)) => {
+            pairs.next();
+            Ok(Node::TypeBase(Box::new(TypeBaseNode::UnsignedLong)))
+        }
+        (Rule::STRUCT, Some(Rule::IDENTIFIER)) => {
+            let ident = pairs.next().unwrap().into_inner().next().unwrap().as_str();
+            Ok(Node::TypeBase(Box::new(TypeBaseNode::Struct(ident.into()))))
+        }
+        err => Err(NodeError {
+            _type: NodeErrorType::TypeBase,
+            message: format!("typebase error: {:?}", err),
+        }),
     }
 }
 
-pub fn parse_args_node(pair: Pair<Rule>) -> Node {
-    todo!()
-}
-
-pub fn parse_term_node(pair: Pair<Rule>) -> Node {
-    todo!()
-}
-
-pub fn parse_type_node(pair: Pair<Rule>) -> Node {
-    todo!()
-}
-
-pub fn parse_typebase_node(pair: Pair<Rule>) -> Node {
-    todo!()
-}
-
 #[test]
-fn test_parse() {
+fn parse_unary() {
     assert!(parse("++1").is_ok());
     assert!(parse("1++").is_ok());
-    let pairs = CBCScanner::parse(Rule::DEF_VAR, "int a;").unwrap();
-    println!("{:#?}", pairs);
+    assert!(parse("sizeof 1").is_ok());
+    assert!(parse("sizeof (int)").is_ok());
+    assert!(parse("sizeof(unsigned long)").is_ok());
 }

@@ -105,6 +105,8 @@ QUESTION  = { "?" }
 PPLUS     = { "++" }
 MMINUS    = { "--" }
 DDDOT     = { "..." }
+RBRACKET  = { ")" }
+LBRACKET  = { "(" }
 
 INTEGER = @{
       '1'..'9' ~ ('0'..'9')* ~ "U"? ~ "L"?
@@ -143,7 +145,7 @@ TYPEREF = { TYPEREF_BASE ~ (
     )*
 }
 
-TYPE = { TYPEREF }
+TYPE = _{ TYPEREF }
 
 PARAM = {
     TYPE ~ NAME
@@ -178,7 +180,7 @@ PRIMARY = {
 UNARY = {
       (PPLUS | MMINUS) ~ UNARY
     | (PLUS | MINUS | NOT | TILDE | STAR | AND) ~ TERM
-    | SIZEOF ~ "(" ~ TYPE ~ ")"
+    | SIZEOF ~ LBRACKET ~ TYPE ~ RBRACKET
     | SIZEOF ~ UNARY
     | POSTFIX
 }
@@ -198,7 +200,7 @@ ARGS = {
     EXPR ~ ("," ~ EXPR)*
 }
 
-TERM = {
+TERM = _{
     "(" ~ TYPE ~ ")" ~ TERM | UNARY
 }
 
