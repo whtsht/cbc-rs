@@ -200,8 +200,8 @@ ARGS = {
     EXPR ~ ("," ~ EXPR)*
 }
 
-TERM = _{
-    "(" ~ TYPE ~ ")" ~ TERM | UNARY
+TERM = {
+    LBRACKET ~ TYPE ~ RBRACKET ~ TERM | UNARY
 }
 
 OPASSIGN_OP = {

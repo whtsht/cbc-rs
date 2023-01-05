@@ -52,6 +52,7 @@ pub enum Node {
     TypeBase(Box<TypeBaseNode>),
     SizeofExprNode(Box<SizeofExprNode>),
     SizeofTypeNode(Box<SizeofTypeNode>),
+    Term(Box<TermNode>),
 }
 
 #[derive(Debug)]
@@ -70,6 +71,12 @@ pub enum NodeErrorType {
     TypeBase,
     SizeofExprNode,
     SizeofTypeNode,
+}
+
+#[derive(Debug)]
+pub enum TermNode {
+    Cast(Node, Box<Node>),
+    Unary(Node),
 }
 
 #[derive(Debug)]
@@ -110,6 +117,32 @@ pub enum PrimaryNode {
 }
 
 #[derive(Debug)]
+pub struct TypeNode {
+    base: TypeBaseNode,
+    suffix: TypeSuffix,
+}
+
+#[derive(Debug)]
+pub enum TypeSuffix {
+    Array,
+    ArrayWithValue(i32),
+    Pointer,
+    Params(ParamsNode),
+}
+
+#[derive(Debug)]
+pub enum ParamsNode {
+    Void,
+    Some { fixed: Vec<Param>, variable: bool },
+}
+
+#[derive(Debug)]
+pub struct Param {
+    _type: TypeNode,
+    name: String,
+}
+
+#[derive(Debug)]
 pub enum TypeBaseNode {
     Void,
     Char,
@@ -136,28 +169,24 @@ pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
 
     for pair in pairs {
         match pair.as_rule() {
-            Rule::EXPR => nodes.push(parse_unary_node(pair.into_inner().peekable())?),
+            Rule::EXPR => nodes.push(parse_term_node(pair.into_inner().peekable())?),
             _ => {}
         }
     }
-
     Ok(nodes)
 }
 
-pub fn parse_unary_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
-    let pairs = pairs.next().unwrap().into_inner().peekable();
-    Ok(parse_prefix_node(pairs)?)
-}
-
-pub fn parse_prefix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
-    let ret = match pairs.peek().unwrap().as_rule() {
+pub fn parse_unary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+    assert_eq!(pair.as_rule(), Rule::UNARY);
+    let mut pairs = pair.into_inner().peekable();
+    let node = match pairs.peek().unwrap().as_rule() {
         Rule::PPLUS => Node::PrefixOp(Box::new(PrefixOpNode {
             operator: PPLUS,
-            expr: parse_unary_node(pairs.nth(1).unwrap().into_inner().peekable())?,
+            expr: parse_unary_node(pairs.nth(1).unwrap())?,
         })),
         Rule::MMINUS => Node::PrefixOp(Box::new(PrefixOpNode {
             operator: MMINUS,
-            expr: parse_unary_node(pairs.nth(1).unwrap().into_inner().peekable())?,
+            expr: parse_unary_node(pairs.nth(1).unwrap())?,
         })),
         Rule::SIZEOF => {
             pairs.next();
@@ -165,7 +194,7 @@ pub fn parse_prefix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeE
         }
         _ => parse_suffix_node(pairs.next().unwrap().into_inner().peekable())?,
     };
-    Ok(ret)
+    Ok(node)
 }
 
 pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
@@ -175,11 +204,11 @@ pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeE
     let node = match second.map(|x| x.as_rule()) {
         Some(Rule::PPLUS) => Node::SuffixOp(Box::new(SuffixOpNode {
             operator: PPLUS,
-            expr: parse_primary_node(first.into_inner().next().unwrap())?,
+            expr: parse_primary_node(first)?,
         })),
         Some(Rule::MMINUS) => Node::SuffixOp(Box::new(SuffixOpNode {
             operator: MMINUS,
-            expr: parse_primary_node(first.into_inner().next().unwrap())?,
+            expr: parse_primary_node(first)?,
         })),
         _ => parse_primary_node(first)?,
     };
@@ -188,6 +217,8 @@ pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeE
 }
 
 pub fn parse_primary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+    debug_assert_eq!(pair.as_rule(), Rule::PRIMARY);
+    let pair = pair.into_inner().next().unwrap();
     let node = match pair.as_rule() {
         Rule::INTEGER => {
             let n = pair.as_str().parse().unwrap();
@@ -215,13 +246,13 @@ pub fn parse_sizeof_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeE
     let node = match pairs.peek().unwrap().as_rule() {
         Rule::LBRACKET => {
             let node = Node::SizeofTypeNode(Box::new(SizeofTypeNode {
-                _type: parse_type_node(pairs.nth(1).unwrap().into_inner().peekable())?,
+                _type: parse_type_node(pairs.nth(1).unwrap())?,
             }));
             pairs.next().unwrap(); // Skip the right bracket
             node
         }
         Rule::UNARY => Node::SizeofExprNode(Box::new(SizeofExprNode {
-            expr: parse_unary_node(pairs.next().unwrap().into_inner().peekable())?,
+            expr: parse_unary_node(pairs.next().unwrap())?,
         })),
         err => panic!("sizeof error: {:?}", err),
     };
@@ -229,20 +260,35 @@ pub fn parse_sizeof_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeE
     Ok(node)
 }
 
-// pub fn parse_args_node(pair: Pair<Rule>) -> Node {
-//     todo!()
-// }
+pub fn parse_term_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
+    let mut pairs = pairs.next().unwrap().into_inner().peekable();
+    let node = match pairs.peek().unwrap().as_rule() {
+        Rule::LBRACKET => {
+            pairs.next().unwrap(); // Skip the left bracket
+            let type_node = pairs.next().unwrap();
+            pairs.next().unwrap(); // Skip the right bracket
+            let node = Node::Term(Box::new(TermNode::Cast(
+                parse_type_node(type_node)?,
+                Box::new(parse_term_node(pairs)?),
+            )));
+            node
+        }
+        Rule::UNARY => Node::SizeofExprNode(Box::new(SizeofExprNode {
+            expr: parse_unary_node(pairs.next().unwrap())?,
+        })),
+        err => panic!("term error: {:?}", err),
+    };
 
-// pub fn parse_term_node(pair: Pair<Rule>) -> Node {
-//     todo!()
-// }
-
-pub fn parse_type_node(pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
-    parse_typebase_node(pairs)
+    Ok(node)
 }
 
-pub fn parse_typebase_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
-    let mut pairs = pairs.next().unwrap().into_inner();
+pub fn parse_type_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+    let pair = pair.into_inner().next().unwrap();
+    parse_typebase_node(pair)
+}
+
+pub fn parse_typebase_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+    let mut pairs = pair.into_inner();
     let first = pairs.next().unwrap();
     let second = pairs.peek();
     match (first.as_rule(), second.map(|x| x.as_rule())) {
@@ -285,4 +331,5 @@ fn parse_unary() {
     assert!(parse("sizeof 1").is_ok());
     assert!(parse("sizeof (int)").is_ok());
     assert!(parse("sizeof(unsigned long)").is_ok());
+    assert!(parse("(int)2").is_ok());
 }
