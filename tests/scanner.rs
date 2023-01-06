@@ -135,10 +135,22 @@ fn import_statement() {
 }
 
 #[test]
+fn complex_type() {
+    assert_eq!(
+        test_one_token(Rule::TYPEREF, "int (char* a, ...)*[][]*"),
+        Token::Some("int (char* a, ...)*[][]*", Rule::TYPEREF)
+    );
+}
+
+#[test]
 fn params() {
     assert_eq!(
         test_one_token(Rule::PARAMS, "void"),
         Token::Some("void", Rule::PARAMS)
+    );
+    assert_eq!(
+        test_one_token(Rule::PARAMS, "void (int a, int b)* func"),
+        Token::Some("void (int a, int b)* func", Rule::PARAMS)
     );
     assert_eq!(
         test_one_token(Rule::PARAMS, "int foo, long bar, char _foo_bar"),

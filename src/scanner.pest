@@ -155,9 +155,11 @@ FIXED_PARAMS = {
     PARAM ~ ("," ~ PARAM)*
 }
 
+VAR_PARAMS = { "," ~ "..." }
+
 PARAMS = {
-      VOID
-    | FIXED_PARAMS ~ ("," ~ "...")?
+      FIXED_PARAMS ~ VAR_PARAMS?
+    | VOID
 }
 
 DEF_VAR = { SLOT ~ ";" }
