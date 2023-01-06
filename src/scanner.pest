@@ -104,9 +104,23 @@ LE        = { "<=" }
 QUESTION  = { "?" }
 PPLUS     = { "++" }
 MMINUS    = { "--" }
+DOT       = { "." }
 DDDOT     = { "..." }
-RBRACKET  = { ")" }
-LBRACKET  = { "(" }
+ARROW     = { "->" }
+
+// Left Square brackets
+LSB       = { "[" }
+// Right Square brackets
+RSB       = { "]" }
+// Left Parentheses
+LPT       = { "(" }
+// Right Parentheses
+RPT       = { ")" }
+// Left Curly braces
+LCB       = { "{" }
+// Right Curly braces
+RCB       = { "}" }
+
 
 INTEGER = @{
       '1'..'9' ~ ('0'..'9')* ~ "U"? ~ "L"?
@@ -138,10 +152,10 @@ TYPEREF_BASE = {
 NAME = { IDENTIFIER }
 
 TYPEREF = { TYPEREF_BASE ~ (
-      "[" ~ "]"
-    | "[" ~ INTEGER ~ "]"
-    | "*"
-    | "(" ~ PARAMS ~ ")"
+      LSB ~ RSB
+    | LSB ~ INTEGER ~ RSB
+    | STAR
+    | LPT ~ PARAMS ~ RPT
     )*
 }
 
@@ -182,7 +196,7 @@ PRIMARY = {
 UNARY = {
       (PPLUS | MMINUS) ~ UNARY
     | (PLUS | MINUS | NOT | TILDE | STAR | AND) ~ TERM
-    | SIZEOF ~ LBRACKET ~ TYPE ~ RBRACKET
+    | SIZEOF ~ LPT ~ TYPE ~ RPT
     | SIZEOF ~ UNARY
     | POSTFIX
 }
@@ -191,10 +205,10 @@ POSTFIX = {
       PRIMARY ~ (
         PPLUS
       | MMINUS
-      | "." ~ NAME
-      | "->" ~ NAME
-      | "[" ~ EXPR ~ "]"
-      | "(" ~ ARGS ~ ")"
+      | DOT ~ NAME
+      | ARROW ~ NAME
+      | LSB ~ EXPR ~ RSB
+      | LPT ~ ARGS ~ RPT
       )*
 }
 
@@ -203,7 +217,7 @@ ARGS = {
 }
 
 TERM = {
-    LBRACKET ~ TYPE ~ RBRACKET ~ TERM | UNARY
+    LPT ~ TYPE ~ RPT ~ TERM | UNARY
 }
 
 OPASSIGN_OP = {

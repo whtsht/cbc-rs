@@ -59,12 +59,9 @@ pub const DDDOT: &str = "...";
 #[derive(Debug)]
 pub enum Node {
     BinaryOp(Box<BinaryOpNode>),
-    SuffixOp(Box<SuffixOpNode>),
-    PrefixOp(Box<PrefixOpNode>),
     Primary(Box<PrimaryNode>),
-    TypeBase(Box<TypeBaseNode>),
-    SizeofExprNode(Box<SizeofExprNode>),
-    SizeofTypeNode(Box<SizeofTypeNode>),
+    Type(Box<TypeNode>),
+    Unary(Box<UnaryNode>),
     Term(Box<TermNode>),
     Params(Box<ParamsNode>),
 }
@@ -105,7 +102,7 @@ pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
 
     for pair in pairs {
         match pair.as_rule() {
-            Rule::EXPR => nodes.push(parse_term_node(pair.into_inner().peekable())?),
+            Rule::EXPR => nodes.push(parse_term_node(pair.into_inner().next().unwrap())?),
             _ => {}
         }
     }

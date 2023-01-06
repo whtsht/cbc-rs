@@ -15,16 +15,16 @@ pub struct SizeofTypeNode {
 
 pub fn parse_sizeof_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
     let node = match pairs.peek().unwrap().as_rule() {
-        Rule::LBRACKET => {
-            let node = Node::SizeofTypeNode(Box::new(SizeofTypeNode {
-                _type: parse_type_node(pairs.nth(1).unwrap())?,
-            }));
+        Rule::LPT => {
+            let node = Node::Unary(Box::new(UnaryNode::SizeofType(parse_type_node(
+                pairs.nth(1).unwrap(),
+            )?)));
             pairs.next().unwrap(); // Skip the right bracket
             node
         }
-        Rule::UNARY => Node::SizeofExprNode(Box::new(SizeofExprNode {
-            expr: parse_unary_node(pairs.next().unwrap())?,
-        })),
+        Rule::UNARY => Node::Unary(Box::new(UnaryNode::SizeofExpr(parse_unary_node(
+            pairs.next().unwrap(),
+        )?))),
         err => panic!("sizeof error: {:?}", err),
     };
 

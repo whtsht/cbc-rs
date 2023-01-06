@@ -1,7 +1,6 @@
 use super::*;
 use crate::Rule;
-use pest::iterators::Pairs;
-use std::iter::Peekable;
+use pest::iterators::Pair;
 
 #[derive(Debug)]
 pub enum TermNode {
@@ -9,22 +8,20 @@ pub enum TermNode {
     Unary(Node),
 }
 
-pub fn parse_term_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
-    let mut pairs = pairs.next().unwrap().into_inner().peekable();
+pub fn parse_term_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+    let mut pairs = pair.into_inner().peekable();
     let node = match pairs.peek().unwrap().as_rule() {
-        Rule::LBRACKET => {
+        Rule::LPT => {
             pairs.next().unwrap(); // Skip the left bracket
             let type_node = pairs.next().unwrap();
             pairs.next().unwrap(); // Skip the right bracket
             let node = Node::Term(Box::new(TermNode::Cast(
                 parse_type_node(type_node)?,
-                Box::new(parse_term_node(pairs)?),
+                Box::new(parse_term_node(pairs.next().unwrap())?),
             )));
             node
         }
-        Rule::UNARY => Node::SizeofExprNode(Box::new(SizeofExprNode {
-            expr: parse_unary_node(pairs.next().unwrap())?,
-        })),
+        Rule::UNARY => parse_unary_node(pairs.next().unwrap())?,
         err => panic!("term error: {:?}", err),
     };
 

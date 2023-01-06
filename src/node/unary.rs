@@ -4,29 +4,58 @@ use pest::iterators::{Pair, Pairs};
 use std::iter::Peekable;
 
 #[derive(Debug)]
-pub struct SuffixOpNode {
-    pub operator: &'static str,
-    pub expr: Node,
+pub enum UnaryNode {
+    Increment(Node),
+    Decrement(Node),
+    PLUS(Node),
+    Minus(Node),
+    Tilde(Node),
+    Not(Node),
+    Star(Node),
+    And(Node),
+    SizeofExpr(Node),
+    SizeofType(Node),
+    Suffix(Node, Vec<SuffixOp>),
 }
 
 #[derive(Debug)]
-pub struct PrefixOpNode {
-    pub operator: &'static str,
-    pub expr: Node,
+pub enum SuffixOp {
+    Increment,
+    Decrement,
+    Dot(String),
+    Arrow(String),
+    Array(Node),
+    CallFu(Node),
 }
 
 pub fn parse_unary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
     assert_eq!(pair.as_rule(), Rule::UNARY);
     let mut pairs = pair.into_inner().peekable();
     let node = match pairs.peek().unwrap().as_rule() {
-        Rule::PPLUS => Node::PrefixOp(Box::new(PrefixOpNode {
-            operator: PPLUS,
-            expr: parse_unary_node(pairs.nth(1).unwrap())?,
-        })),
-        Rule::MMINUS => Node::PrefixOp(Box::new(PrefixOpNode {
-            operator: MMINUS,
-            expr: parse_unary_node(pairs.nth(1).unwrap())?,
-        })),
+        Rule::PPLUS => Node::Unary(Box::new(UnaryNode::Increment(parse_unary_node(
+            pairs.nth(1).unwrap(),
+        )?))),
+        Rule::MMINUS => Node::Unary(Box::new(UnaryNode::Decrement(parse_unary_node(
+            pairs.nth(1).unwrap(),
+        )?))),
+        Rule::PLUS => Node::Unary(Box::new(UnaryNode::And(parse_term_node(
+            pairs.nth(1).unwrap(),
+        )?))),
+        Rule::MINUS => Node::Unary(Box::new(UnaryNode::Minus(parse_term_node(
+            pairs.nth(1).unwrap(),
+        )?))),
+        Rule::NOT => Node::Unary(Box::new(UnaryNode::Not(parse_term_node(
+            pairs.nth(1).unwrap(),
+        )?))),
+        Rule::TILDE => Node::Unary(Box::new(UnaryNode::Tilde(parse_term_node(
+            pairs.nth(1).unwrap(),
+        )?))),
+        Rule::AND => Node::Unary(Box::new(UnaryNode::And(parse_term_node(
+            pairs.nth(1).unwrap(),
+        )?))),
+        Rule::STAR => Node::Unary(Box::new(UnaryNode::Star(parse_term_node(
+            pairs.nth(1).unwrap(),
+        )?))),
         Rule::SIZEOF => {
             pairs.next();
             parse_sizeof_node(pairs)?
@@ -37,20 +66,42 @@ pub fn parse_unary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
 }
 
 pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeError> {
-    let first = pairs.next().unwrap();
-    let second = pairs.next();
+    let primary = parse_primary_node(pairs.next().unwrap())?;
 
-    let node = match second.map(|x| x.as_rule()) {
-        Some(Rule::PPLUS) => Node::SuffixOp(Box::new(SuffixOpNode {
-            operator: PPLUS,
-            expr: parse_primary_node(first)?,
-        })),
-        Some(Rule::MMINUS) => Node::SuffixOp(Box::new(SuffixOpNode {
-            operator: MMINUS,
-            expr: parse_primary_node(first)?,
-        })),
-        _ => parse_primary_node(first)?,
-    };
+    let mut ops = vec![];
 
-    Ok(node)
+    while let Some(pair) = pairs.next() {
+        match pair.as_rule() {
+            Rule::PPLUS => ops.push(SuffixOp::Increment),
+            Rule::MMINUS => ops.push(SuffixOp::Decrement),
+            Rule::DOT => {
+                let name = pairs.next().unwrap().as_str().into();
+                ops.push(SuffixOp::Dot(name))
+            }
+            Rule::ARROW => {
+                let name = pairs.next().unwrap().as_str().into();
+                ops.push(SuffixOp::Arrow(name))
+            }
+            Rule::LSB => {
+                todo!()
+            }
+            Rule::LPT => {
+                todo!()
+            }
+            _ => todo!(),
+        }
+    }
+
+    Ok(Node::Unary(Box::new(UnaryNode::Suffix(primary, ops))))
+}
+
+#[test]
+fn test_unary() {
+    assert!(parse_unary_node(
+        CBCScanner::parse(Rule::UNARY, "year->month->week.day++")
+            .unwrap()
+            .next()
+            .unwrap()
+    )
+    .is_ok());
 }
