@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+mod expr;
 mod param;
 mod primary;
 mod sizeof;
@@ -7,7 +8,8 @@ mod term;
 mod type_;
 mod unary;
 
-use self::param::ParamsNode;
+use self::expr::*;
+use self::param::*;
 use self::primary::*;
 use self::sizeof::*;
 use self::term::*;
@@ -64,6 +66,7 @@ pub enum Node {
     Unary(Box<UnaryNode>),
     Term(Box<TermNode>),
     Params(Box<ParamsNode>),
+    Expr(Box<ExprNode>),
 }
 
 #[derive(Debug)]
@@ -76,12 +79,12 @@ pub struct NodeError {
 pub enum NodeErrorType {
     Token,
     BinaryOp,
-    SuffixOp,
-    PrefixOp,
     Primary,
-    TypeBase,
-    SizeofExprNode,
-    SizeofTypeNode,
+    Type,
+    Unary,
+    Term,
+    Params,
+    Expr,
 }
 
 #[derive(Debug)]

@@ -92,7 +92,7 @@ pub fn parse_typebase_node(pair: Pair<Rule>) -> Result<TypeBaseNode, NodeError> 
             Ok(TypeBaseNode::Struct(ident.into()))
         }
         err => Err(NodeError {
-            _type: NodeErrorType::TypeBase,
+            _type: NodeErrorType::Type,
             message: format!("typebase error: {:?}", err),
         }),
     }

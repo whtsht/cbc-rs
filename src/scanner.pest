@@ -107,6 +107,8 @@ MMINUS    = { "--" }
 DOT       = { "." }
 DDDOT     = { "..." }
 ARROW     = { "->" }
+COLON     = { ":" }
+SCOLON    = { ";" }
 
 // Left Square brackets
 LSB       = { "[" }
@@ -239,47 +241,44 @@ EXPR = {
     | EXPR10
 }
 
-EXPR10 = _{
-    EXPR9 ~ ("?" ~ EXPR ~ ":" ~ EXPR10)?
+EXPR10 = {
+    EXPR9 ~ (QUESTION ~ EXPR10 ~ COLON ~ EXPR10)?
 }
 
-EXPR9 = _{
-    EXPR8 ~ ("||" ~ EXPR8)*
+EXPR9 = {
+    EXPR8 ~ (OOR ~ EXPR8)*
 }
 
-EXPR8 = _{
-    EXPR7 ~ ("&&" ~ EXPR7)*
+EXPR8 = {
+    EXPR7 ~ (AAND ~ EXPR7)*
 }
 
-EXPR7 = _{
-    EXPR6 ~ ((">=" | "<=" | ">" | "<" | "==" | "!=") ~ EXPR6)*
+EXPR7 = {
+    EXPR6 ~ ((GE | LE | GT | LT | EEQ | NE) ~ EXPR6)*
 }
 
-EXPR6 = _{
-    EXPR5 ~ ("|" ~ EXPR5)*
+EXPR6 = {
+    EXPR5 ~ (OR ~ EXPR5)*
 }
 
-EXPR5 = _{
-    EXPR4 ~ ("^" ~ EXPR4)*
+EXPR5 = {
+    EXPR4 ~ (CARET ~ EXPR4)*
 }
 
-EXPR4 = _{
-    EXPR3 ~ ("&" ~ EXPR3)*
+EXPR4 = {
+    EXPR3 ~ (AND ~ EXPR3)*
 }
 
-EXPR3 = _{
-    EXPR2 ~ ((">>" | "<<") ~ EXPR2)*
+EXPR3 = {
+    EXPR2 ~ ((SHL | SHR) ~ EXPR2)*
 }
 
-Add = @{ "+" }
-Mul = @{ "*" }
-
-EXPR2 = _{
-    EXPR1 ~ ((Add | "-") ~ EXPR1)*
+EXPR2 = {
+    EXPR1 ~ ((PLUS | MINUS) ~ EXPR1)*
 }
 
-EXPR1 = _{
-    TERM ~ ((Mul | "/" | "%") ~ TERM)*
+EXPR1 = {
+    TERM ~ ((STAR | SLASH | PERCENT) ~ TERM)*
 }
 
 STMTS = { STMT* }
