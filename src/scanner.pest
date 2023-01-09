@@ -178,11 +178,6 @@ PARAMS = {
     | VOID
 }
 
-DEF_VAR = { SLOT ~ ";" }
-
-DEF_VAR_LIST = { DEF_VAR* }
-
-
 CHARACTER = { "'" ~ ASCII_ALPHA ~ "'" }
 
 STRING = { "\"" ~ ASCII_ALPHA* ~ "\""}
@@ -284,8 +279,8 @@ EXPR1 = {
 STMTS = { STMT* }
 
 STMT = {
-      ";"
-    | EXPR ~ ";"
+      SCOLON
+    | EXPR ~ SCOLON
     | BLOCK
     | IF_STMT
     | WHILE_STMT
@@ -311,11 +306,11 @@ WHILE_STMT = {
 }
 
 DOWHILE_STMT = {
-    DO ~ STMT ~ WHILE ~ "(" ~ EXPR ~ ")" ~ ";"
+    DO ~ STMT ~ WHILE ~ "(" ~ EXPR ~ ")" ~ SCOLON
 }
 
 FOR_STMT = {
-    FOR ~ "(" ~ EXPR ~ ";" ~ EXPR ~ ";" ~ EXPR ~ ")" ~ STMT
+    FOR ~ "(" ~ EXPR ~ SCOLON ~ EXPR ~ SCOLON ~ EXPR ~ ")" ~ STMT
 }
 
 SWITCH_STMT = {
@@ -340,25 +335,24 @@ DEFAULT_CLAUSE = {
 
 CASE_BODY = { STMT }
 
-BREAK_STMT = { BREAK ~ ";" }
+BREAK_STMT = { BREAK ~ SCOLON }
 
-CONTINUE_STMT = { CONTINUE ~ ";" }
+CONTINUE_STMT = { CONTINUE ~ SCOLON }
 
-GOTO_STMT = { GOTO ~ IDENTIFIER ~ ";" }
+GOTO_STMT = { GOTO ~ IDENTIFIER ~ SCOLON }
 
-RETURN_STMT = { RETURN ~ ";" }
-
-STORAGE = { STATIC? }
-DEF_FUNCTION = {
-    STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ ";"
-}
+RETURN_STMT = { RETURN ~ SCOLON }
 
 SLOT = {
     TYPE ~ NAME
 }
 
+DEF_VAR = { SLOT ~ SCOLON }
+
+DEF_VAR_LIST = { DEF_VARS* }
+
 MEMBER_LIST = {
-    "{" ~ (SLOT ~ ";")* ~ "}"
+    "{" ~ (SLOT ~ SCOLON)* ~ "}"
 }
 
 DEF_STRUCT = {
@@ -370,11 +364,11 @@ DEF_UNION = {
 }
 
 DEF_TYPE = {
-    TYPEDEF ~ TYPEREF ~ IDENTIFIER ~ ";"
+    TYPEDEF ~ TYPEREF ~ IDENTIFIER ~ SCOLON
 }
 
 IMPORT_STMT = @{
-    IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ ";"
+    IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ SCOLON
 }
 
 IMPORT_STMTS = { IMPORT_STMT* }
@@ -383,8 +377,14 @@ DEF_CONST = {
     TYPE ~ NAME ~ (EQ ~ EXPR)?
 }
 
+STORAGE = { STATIC? }
+
+DEF_FUNCTION = {
+    STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ SCOLON
+}
+
 DEF_VARS = {
-    STORAGE ~ TYPE ~ NAME ~ (EQ ~ EXPR)?
+    STORAGE ~ TYPE ~ (NAME ~ (EQ ~ EXPR)?) ~ ("," ~ NAME ~ (EQ ~ EXPR)?)* ~ SCOLON
 }
 
 TOP_DEF = {

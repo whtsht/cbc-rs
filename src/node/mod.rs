@@ -4,6 +4,7 @@ mod expr;
 mod param;
 mod primary;
 mod sizeof;
+mod stmt;
 mod term;
 mod type_;
 mod unary;
@@ -12,6 +13,7 @@ use self::expr::*;
 use self::param::*;
 use self::primary::*;
 use self::sizeof::*;
+use self::stmt::*;
 use self::term::*;
 use self::type_::*;
 use self::unary::*;
@@ -67,6 +69,7 @@ pub enum Node {
     Term(Box<TermNode>),
     Params(Box<ParamsNode>),
     Expr(Box<ExprNode>),
+    Stmt(Box<StmtNode>),
 }
 
 #[derive(Debug)]
