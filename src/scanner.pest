@@ -236,8 +236,8 @@ OPASSIGN_OP = {
 }
 
 EXPR = {
-      TERM ~ "=" ~ EXPR
-    | TERM ~ OPASSIGN_OP ~ EXPR
+      TERM ~ EQ ~ EXPR10
+    | TERM ~ OPASSIGN_OP ~ EXPR10
     | EXPR10
 }
 

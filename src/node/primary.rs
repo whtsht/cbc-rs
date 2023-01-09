@@ -24,7 +24,7 @@ pub fn parse_primary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
         }
         Rule::CHARACTER => {
             let s = pair.as_str().to_string().chars().collect::<Vec<_>>();
-            Node::Primary(Box::new(PrimaryNode::Char(s[0])))
+            Node::Primary(Box::new(PrimaryNode::Char(s[1])))
         }
         Rule::IDENTIFIER => {
             let s = pair.as_str().into();
