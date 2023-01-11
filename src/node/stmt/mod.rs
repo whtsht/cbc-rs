@@ -1,25 +1,62 @@
 use pest::iterators::Pair;
 
-use self::{block::parse_block, if_stmt::parse_if_stmt};
+use self::{
+    block::parse_block, break_stmt::parse_break_stmt, dowhile_stmt::parse_dowhile_stmt,
+    for_stmt::parse_for_stmt, goto_stmt::parse_goto_stmt, if_stmt::parse_if_stmt,
+    return_stmt::parse_return_stmt, switch_stmt::parse_switch_stmt, while_stmt::parse_while_stmt,
+};
 
 use super::*;
 
 mod block;
+mod break_stmt;
+mod continue_stmt;
+mod dowhile_stmt;
+mod for_stmt;
+mod goto_stmt;
 mod if_stmt;
-use block::DefVars;
+mod return_stmt;
+mod switch_stmt;
+mod while_stmt;
 
 #[derive(Debug)]
 pub enum StmtNode {
     None,
     Expr(Node),
     Block {
-        def_var_list: Vec<DefVars>,
         stmts: Vec<Node>,
     },
     If {
-        expr: Node,
+        cond: Node,
         then: Node,
         _else: Node,
+    },
+    While {
+        cond: Node,
+        stmt: Node,
+    },
+    DoWhile {
+        cond: Node,
+        stmt: Node,
+    },
+    For {
+        init: Node,
+        cond: Node,
+        term: Node,
+        stmt: Node,
+    },
+    Switch {
+        cond: Node,
+        cases: Vec<(Vec<Node>, Node)>,
+        default: Option<Node>,
+    },
+    Break,
+    Continue,
+    Goto {
+        label: String,
+    },
+    Return {
+        expr: Option<Node>,
     },
 }
 
@@ -50,6 +87,25 @@ pub fn parse_stmt_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
             node
         }
         Rule::IF_STMT => Ok(Node::Stmt(Box::new(parse_if_stmt(pairs.next().unwrap())?))),
+        Rule::WHILE_STMT => Ok(Node::Stmt(Box::new(parse_while_stmt(
+            pairs.next().unwrap(),
+        )?))),
+        Rule::DOWHILE_STMT => Ok(Node::Stmt(Box::new(parse_dowhile_stmt(
+            pairs.next().unwrap(),
+        )?))),
+        Rule::FOR_STMT => Ok(Node::Stmt(Box::new(parse_for_stmt(pairs.next().unwrap())?))),
+        Rule::SWITCH_STMT => Ok(Node::Stmt(Box::new(parse_switch_stmt(
+            pairs.next().unwrap(),
+        )?))),
+        Rule::BREAK_STMT => Ok(Node::Stmt(Box::new(parse_break_stmt(
+            pairs.next().unwrap(),
+        )?))),
+        Rule::GOTO_STMT => Ok(Node::Stmt(Box::new(parse_goto_stmt(
+            pairs.next().unwrap(),
+        )?))),
+        Rule::RETURN_STMT => Ok(Node::Stmt(Box::new(parse_return_stmt(
+            pairs.next().unwrap(),
+        )?))),
         e => todo!("{:?}", e),
     }
 }

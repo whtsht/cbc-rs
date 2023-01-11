@@ -19,12 +19,8 @@ pub enum Var {
 
 pub fn parse_block(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     let mut pairs = pair.into_inner();
-    let def_var_list = def_var_list(pairs.next().unwrap())?;
     let stmts = parse_stmts(pairs.next().unwrap())?;
-    Ok(StmtNode::Block {
-        def_var_list,
-        stmts,
-    })
+    Ok(StmtNode::Block { stmts })
 }
 
 pub fn var(pairs: &mut Peekable<Pairs<Rule>>) -> Result<Var, NodeError> {
@@ -80,10 +76,17 @@ fn test_block() {
     .is_ok());
 
     assert!(parse_block(
-        CBCScanner::parse(Rule::BLOCK, "{ int a, b = 1; static long counter = 0;}")
-            .unwrap()
-            .next()
-            .unwrap(),
+        CBCScanner::parse(
+            Rule::BLOCK,
+            "{
+                t = b;
+                b = a;
+                a = t;
+            }"
+        )
+        .unwrap()
+        .next()
+        .unwrap(),
     )
     .is_ok());
 }

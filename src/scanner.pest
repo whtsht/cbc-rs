@@ -294,7 +294,7 @@ STMT = {
 }
 
 BLOCK = {
-    "{" ~ DEF_VAR_LIST ~ STMTS ~ "}"
+    "{" ~ STMTS ~ "}"
 }
 
 IF_STMT = {
@@ -341,7 +341,7 @@ CONTINUE_STMT = { CONTINUE ~ SCOLON }
 
 GOTO_STMT = { GOTO ~ IDENTIFIER ~ SCOLON }
 
-RETURN_STMT = { RETURN ~ SCOLON }
+RETURN_STMT = { RETURN ~ EXPR? ~ SCOLON }
 
 SLOT = {
     TYPE ~ NAME

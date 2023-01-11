@@ -46,6 +46,7 @@ fn identifier() {
         test_one_token(Rule::IDENTIFIER, "foo bar"),
         Token::Remaining("foo", " bar", Rule::IDENTIFIER)
     );
+    assert_eq!(test_one_token(Rule::IDENTIFIER, "goto"), Token::ParseError);
 
     assert_eq!(test_one_token(Rule::IDENTIFIER, "0"), Token::ParseError);
     assert_eq!(test_one_token(Rule::IDENTIFIER, "♥"), Token::ParseError);

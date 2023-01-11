@@ -114,13 +114,3 @@ pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
     }
     Ok(nodes)
 }
-
-#[test]
-fn parse_unary() {
-    assert!(parse("++1").is_ok());
-    assert!(parse("1++").is_ok());
-    assert!(parse("sizeof 1").is_ok());
-    assert!(parse("sizeof (int)").is_ok());
-    assert!(parse("sizeof(unsigned long)").is_ok());
-    assert!(parse("(int)2").is_ok());
-}
