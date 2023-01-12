@@ -16,10 +16,10 @@ pub fn def_type(pair: Pair<Rule>) -> Result<DefNode, NodeError> {
 
 #[test]
 fn test_type() {
-    use crate::node::def::parse_def_node;
+    use crate::node::def::parse_topdef_node;
     use crate::CBCScanner;
     use pest::Parser;
-    assert!(parse_def_node(
+    assert!(parse_topdef_node(
         CBCScanner::parse(Rule::TOP_DEF, "typedef int Point;",)
             .unwrap()
             .next()

@@ -15,10 +15,10 @@ pub fn def_union(pair: Pair<Rule>) -> Result<DefNode, NodeError> {
 
 #[test]
 fn test_struct() {
-    use crate::node::def::parse_def_node;
+    use crate::node::def::parse_topdef_node;
     use crate::CBCScanner;
     use pest::Parser;
-    assert!(parse_def_node(
+    assert!(parse_topdef_node(
         CBCScanner::parse(Rule::TOP_DEF, "union Point { int x; int y; }",)
             .unwrap()
             .next()

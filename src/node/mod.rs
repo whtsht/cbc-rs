@@ -11,8 +11,10 @@ mod term;
 mod type_;
 mod unary;
 
+use self::def::parse_topdef_node;
 use self::def::DefNode;
 use self::expr::*;
+use self::import::parse_import_node;
 use self::import::ImportNode;
 use self::param::*;
 use self::primary::*;
@@ -108,18 +110,50 @@ pub struct BinaryOpNode {
 
 pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
     let mut nodes = vec![];
-    let pairs = CBCScanner::parse(Rule::EXPR, src).or_else(|_| {
-        Err(NodeError {
-            _type: NodeErrorType::Token,
-            message: String::from("failed to scan"),
-        })
-    })?;
+    let mut pairs = CBCScanner::parse(Rule::FILE, src)
+        .or_else(|_| {
+            Err(NodeError {
+                _type: NodeErrorType::Token,
+                message: String::from("failed to scan"),
+            })
+        })?
+        .next()
+        .unwrap()
+        .into_inner();
 
-    for pair in pairs {
+    while let Some(pair) = pairs.next() {
         match pair.as_rule() {
-            Rule::EXPR => nodes.push(parse_term_node(pair.into_inner().next().unwrap())?),
-            _ => {}
+            Rule::IMPORT_STMT => nodes.push(parse_import_node(pair)?),
+            Rule::TOP_DEF => nodes.push(parse_topdef_node(pair)?),
+            Rule::EOI => break,
+            e => panic!("{:?}", e),
         }
     }
+
     Ok(nodes)
+}
+
+#[test]
+fn test_parse() {
+    assert!(parse(
+        r#" import stdio;
+                int main (void) {
+                    exit(1);
+                    return 0;
+                }"#
+    )
+    .is_ok());
+    assert!(parse(
+        r#" import stdio;
+                import stdlib;
+                int main (int argc, char **argv) {
+                    int i, j = 5;
+                    if (i) {
+                        return (j * 1 - j);
+                    } else {
+                        exit(1);
+                    }
+                }"#
+    )
+    .is_ok());
 }

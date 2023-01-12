@@ -19,10 +19,10 @@ pub fn def_const(pair: Pair<Rule>) -> Result<DefNode, NodeError> {
 
 #[test]
 fn test_const() {
-    use crate::node::def::parse_def_node;
+    use crate::node::def::parse_topdef_node;
     use crate::CBCScanner;
     use pest::Parser;
-    assert!(parse_def_node(
+    assert!(parse_topdef_node(
         CBCScanner::parse(Rule::TOP_DEF, "const int PI = 3;",)
             .unwrap()
             .next()

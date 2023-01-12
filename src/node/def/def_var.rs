@@ -84,8 +84,8 @@ fn test_def_var() {
     )
     .is_ok());
 
-    use crate::node::def::parse_def_node;
-    assert!(parse_def_node(
+    use crate::node::def::parse_topdef_node;
+    assert!(parse_topdef_node(
         CBCScanner::parse(Rule::TOP_DEF, r#"int global = 10;"#)
             .unwrap()
             .next()

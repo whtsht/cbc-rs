@@ -25,7 +25,7 @@ pub enum SuffixOp {
     Dot(String),
     Arrow(String),
     Array(Node),
-    CallFu(Node),
+    CallFu(Vec<Node>),
 }
 
 pub fn parse_unary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
@@ -83,16 +83,30 @@ pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<Node, NodeE
                 ops.push(SuffixOp::Arrow(name))
             }
             Rule::LSB => {
-                todo!()
+                let idx = parse_expr_node(pairs.next().unwrap())?;
+                ops.push(SuffixOp::Array(idx));
+                pairs.next(); // ]
             }
             Rule::LPT => {
-                todo!()
+                ops.push(SuffixOp::CallFu(parse_args(pairs.next().unwrap())?));
+                pairs.next(); // )
             }
-            _ => todo!(),
+            e => panic!("{:?}", e),
         }
     }
 
     Ok(Node::Unary(Box::new(UnaryNode::Suffix(primary, ops))))
+}
+
+pub fn parse_args(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+    let mut pairs = pair.into_inner();
+    let mut args = vec![];
+
+    while let Some(pair) = pairs.next() {
+        args.push(parse_expr_node(pair)?);
+    }
+
+    Ok(args)
 }
 
 #[test]

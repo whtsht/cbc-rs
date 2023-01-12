@@ -83,7 +83,7 @@ pub fn test_member_list() {
     );
 }
 
-pub fn parse_def_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+pub fn parse_topdef_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
     let mut pairs = pair.into_inner().peekable();
 
     let def_node = match pairs.peek().unwrap().as_rule() {
