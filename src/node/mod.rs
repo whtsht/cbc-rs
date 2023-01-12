@@ -2,6 +2,7 @@
 
 mod def;
 mod expr;
+mod import;
 mod param;
 mod primary;
 mod sizeof;
@@ -12,6 +13,7 @@ mod unary;
 
 use self::def::DefNode;
 use self::expr::*;
+use self::import::ImportNode;
 use self::param::*;
 use self::primary::*;
 use self::sizeof::*;
@@ -73,6 +75,7 @@ pub enum Node {
     Expr(Box<ExprNode>),
     Stmt(Box<StmtNode>),
     Def(Box<DefNode>),
+    Import(Box<ImportNode>),
 }
 
 #[derive(Debug)]
@@ -91,6 +94,9 @@ pub enum NodeErrorType {
     Term,
     Params,
     Expr,
+    Stmt,
+    Def,
+    Import,
 }
 
 #[derive(Debug)]
