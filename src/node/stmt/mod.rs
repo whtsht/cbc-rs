@@ -1,9 +1,16 @@
 use pest::iterators::Pair;
 
 use self::{
-    block::parse_block, break_stmt::parse_break_stmt, dowhile_stmt::parse_dowhile_stmt,
-    for_stmt::parse_for_stmt, goto_stmt::parse_goto_stmt, if_stmt::parse_if_stmt,
-    return_stmt::parse_return_stmt, switch_stmt::parse_switch_stmt, while_stmt::parse_while_stmt,
+    block::parse_block,
+    break_stmt::parse_break_stmt,
+    def_var::{parse_def_vars_list, DefVars},
+    dowhile_stmt::parse_dowhile_stmt,
+    for_stmt::parse_for_stmt,
+    goto_stmt::parse_goto_stmt,
+    if_stmt::parse_if_stmt,
+    return_stmt::parse_return_stmt,
+    switch_stmt::parse_switch_stmt,
+    while_stmt::parse_while_stmt,
 };
 
 use super::*;
@@ -11,6 +18,7 @@ use super::*;
 mod block;
 mod break_stmt;
 mod continue_stmt;
+mod def_var;
 mod dowhile_stmt;
 mod for_stmt;
 mod goto_stmt;
@@ -58,6 +66,7 @@ pub enum StmtNode {
     Return {
         expr: Option<Node>,
     },
+    DefVarsList(Vec<DefVars>),
 }
 
 pub fn parse_stmts(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
@@ -104,6 +113,9 @@ pub fn parse_stmt_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
             pairs.next().unwrap(),
         )?))),
         Rule::RETURN_STMT => Ok(Node::Stmt(Box::new(parse_return_stmt(
+            pairs.next().unwrap(),
+        )?))),
+        Rule::DEF_VARS_LIST => Ok(Node::Stmt(Box::new(parse_def_vars_list(
             pairs.next().unwrap(),
         )?))),
         e => todo!("{:?}", e),
