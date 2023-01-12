@@ -1,4 +1,5 @@
-use super::*;
+use super::super::*;
+use pest::iterators::Pair;
 use pest::iterators::Pairs;
 use std::iter::Peekable;
 
@@ -15,14 +16,14 @@ pub enum Var {
     Init { name: String, expr: Node },
 }
 
-pub fn parse_def_vars_list(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
+pub fn parse_def_vars_list(pair: Pair<Rule>) -> Result<Vec<DefVars>, NodeError> {
     let mut pairs = pair.into_inner();
     let mut def_var_list = vec![];
     while let Some(pair) = pairs.next() {
         def_var_list.push(def_vars(pair)?);
     }
 
-    Ok(StmtNode::DefVarsList(def_var_list))
+    Ok(def_var_list)
 }
 
 pub fn def_vars(pair: Pair<Rule>) -> Result<DefVars, NodeError> {
@@ -80,6 +81,15 @@ fn test_def_var() {
         .unwrap()
         .next()
         .unwrap()
+    )
+    .is_ok());
+
+    use crate::node::def::parse_def_node;
+    assert!(parse_def_node(
+        CBCScanner::parse(Rule::TOP_DEF, r#"int global = 10;"#)
+            .unwrap()
+            .next()
+            .unwrap()
     )
     .is_ok());
 }

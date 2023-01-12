@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+mod def;
 mod expr;
 mod param;
 mod primary;
@@ -9,6 +10,7 @@ mod term;
 mod type_;
 mod unary;
 
+use self::def::DefNode;
 use self::expr::*;
 use self::param::*;
 use self::primary::*;
@@ -70,6 +72,7 @@ pub enum Node {
     Params(Box<ParamsNode>),
     Expr(Box<ExprNode>),
     Stmt(Box<StmtNode>),
+    Def(Box<DefNode>),
 }
 
 #[derive(Debug)]

@@ -178,8 +178,8 @@ fn params() {
 #[test]
 fn def_function() {
     assert_eq!(
-        test_one_token(Rule::DEF_FUNCTION, "int add(int x, int y);"),
-        Token::Some("int add(int x, int y);", Rule::DEF_FUNCTION)
+        test_one_token(Rule::DEF_FUNCTION, "int add(int x, int y) {}"),
+        Token::Some("int add(int x, int y) {}", Rule::DEF_FUNCTION)
     );
     assert_eq!(
         test_one_token(Rule::DEF_FUNCTION, "int add(x, y)"),

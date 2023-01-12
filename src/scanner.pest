@@ -357,7 +357,7 @@ DEF_VARS = {
 DEF_VARS_LIST = { DEF_VARS+ }
 
 MEMBER_LIST = {
-    "{" ~ (SLOT ~ SCOLON)* ~ "}"
+    "{" ~ (SLOT ~ ";")* ~ "}"
 }
 
 DEF_STRUCT = {
@@ -379,13 +379,13 @@ IMPORT_STMT = @{
 IMPORT_STMTS = { IMPORT_STMT* }
 
 DEF_CONST = {
-    TYPE ~ NAME ~ (EQ ~ EXPR)?
+   CONST ~ TYPE ~ NAME ~ (EQ ~ EXPR)?
 }
 
 STORAGE = { STATIC? }
 
 DEF_FUNCTION = {
-    STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ SCOLON
+    STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ BLOCK
 }
 
 TOP_DEF = {
@@ -397,4 +397,4 @@ TOP_DEF = {
     | DEF_TYPE
 }
 
-FILE = { SOI ~ IMPORT_STMTS ~ TOP_DEF ~ EOI }
+FILE = { SOI ~ IMPORT_STMTS ~ TOP_DEF* ~ EOI }
