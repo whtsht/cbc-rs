@@ -88,7 +88,7 @@ pub fn parse_typebase_node(pair: Pair<Rule>) -> Result<TypeBaseNode, NodeError> 
             Ok(TypeBaseNode::UnsignedLong)
         }
         (Rule::STRUCT, Some(Rule::IDENTIFIER)) => {
-            let ident = pairs.next().unwrap().into_inner().next().unwrap().as_str();
+            let ident = pairs.next().unwrap().as_str();
             Ok(TypeBaseNode::Struct(ident.into()))
         }
         err => Err(NodeError {

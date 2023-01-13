@@ -157,5 +157,4 @@ fn test_parse() {
     )
     .is_ok());
     println!("{:#?}", parse("struct point { int x; int y; }"));
-    //println!("{:#?}", parse("struct point x;"));
 }

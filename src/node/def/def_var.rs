@@ -67,6 +67,13 @@ fn test_def_var() {
             .unwrap(),
     )
     .is_ok());
+    assert!(parse_def_vars_list(
+        CBCScanner::parse(Rule::DEF_VARS_LIST, "struct point a, b;")
+            .unwrap()
+            .next()
+            .unwrap(),
+    )
+    .is_ok());
 
     assert!(parse_stmt_node(
         CBCScanner::parse(
