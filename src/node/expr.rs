@@ -2,7 +2,7 @@ use super::*;
 use pest::iterators::{Pair, Pairs};
 use std::iter::Peekable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BinaryOp {
     Mul,
     Div,
@@ -24,12 +24,12 @@ pub enum BinaryOp {
     Ne,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TernaryOp {
     If,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AssignOp {
     Add,
     Sub,
@@ -43,7 +43,7 @@ pub enum AssignOp {
     Shr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ExprNode {
     Term(Node),
     Assign {

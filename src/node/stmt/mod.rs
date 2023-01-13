@@ -18,7 +18,7 @@ mod return_stmt;
 mod switch_stmt;
 mod while_stmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StmtNode {
     None,
     Expr(Node),

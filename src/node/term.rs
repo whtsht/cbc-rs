@@ -2,7 +2,7 @@ use super::*;
 use crate::Rule;
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TermNode {
     Cast(Node, Box<Node>),
     Unary(Node),

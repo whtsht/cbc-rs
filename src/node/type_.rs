@@ -2,7 +2,7 @@ use super::{param::parse_params_node, *};
 use crate::Rule;
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TypeBaseNode {
     Void,
     Char,
@@ -18,13 +18,13 @@ pub enum TypeBaseNode {
     Identifier(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypeNode {
     base: TypeBaseNode,
     suffixs: Vec<TypeSuffix>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum TypeSuffix {
     Array,
     ArrayWithValue(i32),

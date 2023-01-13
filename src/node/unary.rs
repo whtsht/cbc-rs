@@ -3,7 +3,7 @@ use crate::Rule;
 use pest::iterators::{Pair, Pairs};
 use std::iter::Peekable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum UnaryNode {
     Increment(Node),
     Decrement(Node),
@@ -18,7 +18,7 @@ pub enum UnaryNode {
     Suffix(Node, Vec<SuffixOp>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum SuffixOp {
     Increment,
     Decrement,

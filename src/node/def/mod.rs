@@ -17,7 +17,7 @@ mod def_type;
 mod def_union;
 pub mod def_var;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum DefNode {
     Vars(DefVars),
     Fun {
@@ -46,7 +46,7 @@ pub enum DefNode {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Member {
     _type: Node,
     name: String,

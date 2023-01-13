@@ -2,13 +2,13 @@ use pest::iterators::Pair;
 
 use super::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ParamsNode {
     Void,
     Some { fixed: Vec<Param>, variable: bool },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Param {
     _type: Node,
     name: String,

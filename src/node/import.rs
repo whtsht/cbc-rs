@@ -2,7 +2,7 @@ use super::{Node, NodeError};
 use crate::Rule;
 use pest::iterators::Pair;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ImportNode {
     names: Vec<String>,
 }

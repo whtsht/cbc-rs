@@ -3,14 +3,14 @@ use pest::iterators::Pair;
 use pest::iterators::Pairs;
 use std::iter::Peekable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DefVars {
-    _type: Node,
-    is_static: bool,
-    vars: Vec<Var>,
+    pub _type: Node,
+    pub is_static: bool,
+    pub vars: Vec<Var>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Var {
     Uninit { name: String },
     Init { name: String, expr: Node },

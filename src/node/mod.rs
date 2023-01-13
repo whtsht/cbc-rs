@@ -1,15 +1,15 @@
 #![allow(dead_code)]
 
-mod def;
-mod expr;
-mod import;
-mod param;
-mod primary;
-mod sizeof;
-mod stmt;
-mod term;
-mod type_;
-mod unary;
+pub mod def;
+pub mod expr;
+pub mod import;
+pub mod param;
+pub mod primary;
+pub mod sizeof;
+pub mod stmt;
+pub mod term;
+pub mod type_;
+pub mod unary;
 
 use self::def::parse_topdef_node;
 use self::def::DefNode;
@@ -66,7 +66,7 @@ pub const PPLUS: &str = "++";
 pub const MMINUS: &str = "--";
 pub const DDDOT: &str = "...";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Node {
     BinaryOp(Box<BinaryOpNode>),
     Primary(Box<PrimaryNode>),
@@ -101,7 +101,7 @@ pub enum NodeErrorType {
     Import,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BinaryOpNode {
     operator: &'static str,
     lhs: Node,
@@ -156,5 +156,4 @@ fn test_parse() {
                 }"#
     )
     .is_ok());
-    println!("{:#?}", parse("struct point { int x; int y; }"));
 }
