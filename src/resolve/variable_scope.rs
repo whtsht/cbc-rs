@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-
-use crate::node::def::def_var::Var;
+use crate::node::def::def_var::{DefVars, Var};
 use crate::node::def::DefNode;
 use crate::node::stmt::StmtNode;
 use crate::node::Node;
@@ -30,37 +29,41 @@ pub enum Entity {
 }
 
 pub fn gen_scope_tree(nodes: Vec<Node>, scope: Rc<Scope>, parent: Weak<Scope>) -> Rc<Scope> {
-    *scope.parent.borrow_mut() = parent;
+    if parent.upgrade().is_some() {
+        *scope.parent.borrow_mut() = parent;
+    }
+
+    let apply_vars = |vars: DefVars| {
+        for var in vars.vars {
+            match var {
+                Var::Init { name, expr } => {
+                    scope.entities.borrow_mut().insert(
+                        name,
+                        Entity::Variable {
+                            _type: vars._type.clone(),
+                            is_static: vars.is_static,
+                            init: Some(expr),
+                        },
+                    );
+                }
+                Var::Uninit { name } => {
+                    scope.entities.borrow_mut().insert(
+                        name,
+                        Entity::Variable {
+                            _type: vars._type.clone(),
+                            is_static: vars.is_static,
+                            init: None,
+                        },
+                    );
+                }
+            }
+        }
+    };
 
     for node in nodes {
         match node {
             Node::Def(def_node) => match *def_node {
-                DefNode::Vars(vars) => {
-                    for var in vars.vars {
-                        match var {
-                            Var::Init { name, expr } => {
-                                scope.entities.borrow_mut().insert(
-                                    name,
-                                    Entity::Variable {
-                                        _type: vars._type.clone(),
-                                        is_static: vars.is_static,
-                                        init: Some(expr),
-                                    },
-                                );
-                            }
-                            Var::Uninit { name } => {
-                                scope.entities.borrow_mut().insert(
-                                    name,
-                                    Entity::Variable {
-                                        _type: vars._type.clone(),
-                                        is_static: vars.is_static,
-                                        init: None,
-                                    },
-                                );
-                            }
-                        }
-                    }
-                }
+                DefNode::Vars(vars) => apply_vars(vars),
                 DefNode::Fun {
                     is_static,
                     _type,
@@ -85,46 +88,23 @@ pub fn gen_scope_tree(nodes: Vec<Node>, scope: Rc<Scope>, parent: Weak<Scope>) -
             },
             Node::Stmt(stmt) => match *stmt {
                 StmtNode::DefVars(vars) => {
-                    for var in vars.vars {
-                        match var {
-                            Var::Init { name, expr } => {
-                                scope.entities.borrow_mut().insert(
-                                    name,
-                                    Entity::Variable {
-                                        _type: vars._type.clone(),
-                                        is_static: vars.is_static,
-                                        init: Some(expr),
-                                    },
-                                );
-                            }
-                            Var::Uninit { name } => {
-                                scope.entities.borrow_mut().insert(
-                                    name,
-                                    Entity::Variable {
-                                        _type: vars._type.clone(),
-                                        is_static: vars.is_static,
-                                        init: None,
-                                    },
-                                );
-                            }
-                        }
-                    }
+                    apply_vars(vars);
                 }
                 e => panic!("{:#?}", e),
             },
             e => panic!("{:#?}", e),
         }
     }
-
     scope
 }
 
 #[test]
 fn test_scope() {
     let nodes = crate::node::parse(
-        r#"int a, b, c = 1;
+        r#"int a = 1, b = 2, c = 3;
         void main(void) {
             int d = 10;
+            int e = a + d;
         }
            "#,
     )

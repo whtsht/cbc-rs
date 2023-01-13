@@ -60,7 +60,8 @@ pub fn parse_unary_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
             pairs.next();
             parse_sizeof_node(pairs)?
         }
-        _ => parse_suffix_node(pairs.next().unwrap().into_inner().peekable())?,
+        Rule::POSTFIX => parse_suffix_node(pairs.next().unwrap().into_inner().peekable())?,
+        _ => todo!(),
     };
     Ok(node)
 }
