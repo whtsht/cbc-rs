@@ -46,8 +46,8 @@ pub enum StmtNode {
     },
     Switch {
         cond: Node,
-        cases: Vec<(Vec<Node>, Node)>,
-        default: Option<Node>,
+        cases: Vec<(Vec<Node>, Vec<Node>)>,
+        default: Option<Vec<Node>>,
     },
     Break,
     Continue,

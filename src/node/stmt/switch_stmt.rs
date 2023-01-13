@@ -13,7 +13,9 @@ pub fn parse_switch_stmt(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     })
 }
 
-pub fn case_clauses(pair: Pair<Rule>) -> Result<(Vec<(Vec<Node>, Node)>, Option<Node>), NodeError> {
+pub fn case_clauses(
+    pair: Pair<Rule>,
+) -> Result<(Vec<(Vec<Node>, Vec<Node>)>, Option<Vec<Node>>), NodeError> {
     let mut pairs = pair.into_inner().peekable();
 
     let mut clist = vec![];
@@ -30,7 +32,7 @@ pub fn case_clauses(pair: Pair<Rule>) -> Result<(Vec<(Vec<Node>, Node)>, Option<
     }
 }
 
-pub fn case_clause(pair: Pair<Rule>) -> Result<(Vec<Node>, Node), NodeError> {
+pub fn case_clause(pair: Pair<Rule>) -> Result<(Vec<Node>, Vec<Node>), NodeError> {
     let mut pairs = pair.into_inner();
     let cases = cases(pairs.next().unwrap())?;
     let body = case_body(pairs.next().unwrap())?;
@@ -38,7 +40,7 @@ pub fn case_clause(pair: Pair<Rule>) -> Result<(Vec<Node>, Node), NodeError> {
     Ok((cases, body))
 }
 
-pub fn default_clause(pair: Pair<Rule>) -> Result<Node, NodeError> {
+pub fn default_clause(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
     let mut pairs = pair.into_inner();
     pairs.next().unwrap();
     case_body(pairs.next().unwrap())
@@ -57,43 +59,25 @@ pub fn cases(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
     Ok(plist)
 }
 
-pub fn case_body(pair: Pair<Rule>) -> Result<Node, NodeError> {
-    Ok(parse_stmt_node(pair.into_inner().next().unwrap())?)
+pub fn case_body(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+    Ok(parse_stmts(pair.into_inner().next().unwrap())?)
 }
 
 #[test]
 fn test_switch() {
-    println!(
-        "{:#?}",
-        parse_stmt_node(
-            CBCScanner::parse(
-                Rule::STMT,
-                r#"switch (foo) {
-                    case 1:
-                        sum += 1;
-                    case 2:
-                        sum += 2;
-                    default:
-                        sum = 0;
-                }
-                "#
-            )
-            .unwrap()
-            .next()
-            .unwrap()
-        )
-        .unwrap()
-    );
     assert!(parse_stmt_node(
         CBCScanner::parse(
             Rule::STMT,
             r#"switch (foo) {
                      case 1:
-                         sum += 1;
+                        sum += 1;
+                        break;
                      case 2:
-                         sum += 2;
+                        sum += 2;
+                        break;
                      default:
-                         sum = 0;
+                        sum = 0;
+                        break;
                  }
                  "#
         )
