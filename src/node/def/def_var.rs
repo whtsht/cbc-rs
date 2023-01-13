@@ -16,17 +16,7 @@ pub enum Var {
     Init { name: String, expr: Node },
 }
 
-pub fn parse_def_vars_list(pair: Pair<Rule>) -> Result<Vec<DefVars>, NodeError> {
-    let mut pairs = pair.into_inner();
-    let mut def_var_list = vec![];
-    while let Some(pair) = pairs.next() {
-        def_var_list.push(def_vars(pair)?);
-    }
-
-    Ok(def_var_list)
-}
-
-pub fn def_vars(pair: Pair<Rule>) -> Result<DefVars, NodeError> {
+pub fn parse_def_vars(pair: Pair<Rule>) -> Result<DefVars, NodeError> {
     let mut pairs = pair.into_inner().peekable();
     let is_static = pairs.next().unwrap().into_inner().next().is_some();
     let _type = parse_type_node(pairs.next().unwrap())?;
@@ -60,15 +50,15 @@ pub fn var(pairs: &mut Peekable<Pairs<Rule>>) -> Result<Var, NodeError> {
 
 #[test]
 fn test_def_var() {
-    assert!(parse_def_vars_list(
-        CBCScanner::parse(Rule::DEF_VARS_LIST, "static unsigned int a = 1, b;")
+    assert!(parse_def_vars(
+        CBCScanner::parse(Rule::DEF_VARS, "static unsigned int a = 1, b;")
             .unwrap()
             .next()
             .unwrap(),
     )
     .is_ok());
-    assert!(parse_def_vars_list(
-        CBCScanner::parse(Rule::DEF_VARS_LIST, "struct point a, b;")
+    assert!(parse_def_vars(
+        CBCScanner::parse(Rule::DEF_VARS, "struct point a, b;")
             .unwrap()
             .next()
             .unwrap(),

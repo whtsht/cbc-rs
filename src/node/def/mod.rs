@@ -4,7 +4,7 @@ use self::{
     def_struct::def_struct,
     def_type::def_type,
     def_union::def_union,
-    def_var::{def_vars, DefVars},
+    def_var::{parse_def_vars, DefVars},
 };
 use super::{type_::parse_type_node, Node, NodeError};
 use crate::Rule;
@@ -25,7 +25,7 @@ pub enum DefNode {
         _type: Node,
         name: String,
         params: Node,
-        block: Node,
+        block: Vec<Node>,
     },
     Const {
         _type: Node,
@@ -87,7 +87,7 @@ pub fn parse_topdef_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
     let mut pairs = pair.into_inner().peekable();
 
     let def_node = match pairs.peek().unwrap().as_rule() {
-        Rule::DEF_VARS => DefNode::Vars(def_vars(pairs.next().unwrap())?),
+        Rule::DEF_VARS => DefNode::Vars(parse_def_vars(pairs.next().unwrap())?),
         Rule::DEF_FUNCTION => def_fun(pairs.next().unwrap())?,
         Rule::DEF_CONST => def_const(pairs.next().unwrap())?,
         Rule::DEF_TYPE => def_type(pairs.next().unwrap())?,

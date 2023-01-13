@@ -1,8 +1,8 @@
 use super::DefNode;
 use crate::node::param::parse_params_node;
-use crate::node::stmt::block::parse_block;
+use crate::node::stmt::block::parse_block_stmts;
 use crate::node::type_::parse_type_node;
-use crate::node::{Node, NodeError};
+use crate::node::NodeError;
 use crate::Rule;
 use pest::iterators::Pair;
 
@@ -13,7 +13,7 @@ pub fn def_fun(pair: Pair<Rule>) -> Result<DefNode, NodeError> {
     let _type = parse_type_node(pairs.next().unwrap())?;
     let name = pairs.next().unwrap().as_str().into();
     let params = parse_params_node(pairs.next().unwrap())?;
-    let block = Node::Stmt(Box::new(parse_block(pairs.next().unwrap())?));
+    let block = parse_block_stmts(pairs.next().unwrap())?;
 
     Ok(DefNode::Fun {
         is_static,

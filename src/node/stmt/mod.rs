@@ -57,7 +57,7 @@ pub enum StmtNode {
     Return {
         expr: Option<Node>,
     },
-    DefVarsList(Vec<DefVars>),
+    DefVars(DefVars),
 }
 
 pub fn parse_stmts(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
@@ -106,9 +106,9 @@ pub fn parse_stmt_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
         Rule::RETURN_STMT => Ok(Node::Stmt(Box::new(parse_return_stmt(
             pairs.next().unwrap(),
         )?))),
-        Rule::DEF_VARS_LIST => Ok(Node::Stmt(Box::new(StmtNode::DefVarsList(
-            parse_def_vars_list(pairs.next().unwrap())?,
-        )))),
+        Rule::DEF_VARS => Ok(Node::Stmt(Box::new(StmtNode::DefVars(parse_def_vars(
+            pairs.next().unwrap(),
+        )?)))),
         e => todo!("{:?}", e),
     }
 }

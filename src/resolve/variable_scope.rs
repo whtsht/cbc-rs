@@ -2,14 +2,17 @@
 
 use crate::node::def::def_var::Var;
 use crate::node::def::DefNode;
+use crate::node::stmt::StmtNode;
 use crate::node::Node;
+use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::rc::{Rc, Weak};
 
-#[derive(Debug)]
-pub struct Scope<'a> {
-    pub parent: Option<&'a Scope<'a>>,
-    pub localscope: Vec<Scope<'a>>,
-    pub entities: BTreeMap<String, Entity>,
+#[derive(Debug, Default)]
+pub struct Scope {
+    pub parent: RefCell<Weak<Scope>>,
+    pub localscope: RefCell<Vec<Rc<Scope>>>,
+    pub entities: RefCell<BTreeMap<String, Entity>>,
 }
 
 #[derive(Debug)]
@@ -19,14 +22,15 @@ pub enum Entity {
         is_static: bool,
         init: Option<Node>,
     },
+    Function {
+        return_type: Node,
+        is_static: bool,
+        params: Node,
+    },
 }
 
-pub fn gen_scope_tree<'a>(
-    nodes: Vec<Node>,
-    mut scope: Scope<'a>,
-    parent: Option<&'a Scope<'a>>,
-) -> Scope<'a> {
-    scope.parent = parent;
+pub fn gen_scope_tree(nodes: Vec<Node>, scope: Rc<Scope>, parent: Weak<Scope>) -> Rc<Scope> {
+    *scope.parent.borrow_mut() = parent;
 
     for node in nodes {
         match node {
@@ -35,7 +39,7 @@ pub fn gen_scope_tree<'a>(
                     for var in vars.vars {
                         match var {
                             Var::Init { name, expr } => {
-                                scope.entities.insert(
+                                scope.entities.borrow_mut().insert(
                                     name,
                                     Entity::Variable {
                                         _type: vars._type.clone(),
@@ -45,7 +49,7 @@ pub fn gen_scope_tree<'a>(
                                 );
                             }
                             Var::Uninit { name } => {
-                                scope.entities.insert(
+                                scope.entities.borrow_mut().insert(
                                     name,
                                     Entity::Variable {
                                         _type: vars._type.clone(),
@@ -57,7 +61,56 @@ pub fn gen_scope_tree<'a>(
                         }
                     }
                 }
+                DefNode::Fun {
+                    is_static,
+                    _type,
+                    name,
+                    params,
+                    block,
+                } => {
+                    scope.entities.borrow_mut().insert(
+                        name,
+                        Entity::Function {
+                            return_type: _type,
+                            is_static,
+                            params,
+                        },
+                    );
+
+                    let local =
+                        gen_scope_tree(block, Rc::new(Scope::default()), Rc::downgrade(&scope));
+                    (*scope.localscope.borrow_mut()).push(local);
+                }
                 _ => todo!(),
+            },
+            Node::Stmt(stmt) => match *stmt {
+                StmtNode::DefVars(vars) => {
+                    for var in vars.vars {
+                        match var {
+                            Var::Init { name, expr } => {
+                                scope.entities.borrow_mut().insert(
+                                    name,
+                                    Entity::Variable {
+                                        _type: vars._type.clone(),
+                                        is_static: vars.is_static,
+                                        init: Some(expr),
+                                    },
+                                );
+                            }
+                            Var::Uninit { name } => {
+                                scope.entities.borrow_mut().insert(
+                                    name,
+                                    Entity::Variable {
+                                        _type: vars._type.clone(),
+                                        is_static: vars.is_static,
+                                        init: None,
+                                    },
+                                );
+                            }
+                        }
+                    }
+                }
+                e => panic!("{:#?}", e),
             },
             e => panic!("{:#?}", e),
         }
@@ -68,16 +121,24 @@ pub fn gen_scope_tree<'a>(
 
 #[test]
 fn test_scope() {
-    let parent = None;
-    let nodes = crate::node::parse("int a, b, c = 1;").unwrap();
-    let scope = Scope {
-        parent: None,
-        localscope: vec![],
-        entities: BTreeMap::new(),
-    };
+    let nodes = crate::node::parse(
+        r#"int a, b, c = 1;
+        void main(void) {
+            int d = 10;
+        }
+           "#,
+    )
+    .unwrap();
 
-    let scope_tree = gen_scope_tree(nodes, scope, parent);
-    assert!(scope_tree.entities.get("a").is_some());
-    assert!(scope_tree.entities.get("b").is_some());
-    assert!(scope_tree.entities.get("c").is_some());
+    let scope = Rc::new(Scope::default());
+    let scope_tree = gen_scope_tree(nodes, scope, Weak::new());
+    assert!(scope_tree.localscope.borrow()[0]
+        .entities
+        .borrow()
+        .get("d")
+        .is_some());
+
+    assert!(scope_tree.entities.borrow().get("a").is_some());
+    assert!(scope_tree.entities.borrow().get("b").is_some());
+    assert!(scope_tree.entities.borrow().get("c").is_some());
 }

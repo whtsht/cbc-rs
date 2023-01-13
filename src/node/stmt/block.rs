@@ -6,6 +6,12 @@ pub fn parse_block(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     Ok(StmtNode::Block { stmts })
 }
 
+pub fn parse_block_stmts(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+    let mut pairs = pair.into_inner();
+    let stmts = parse_stmts(pairs.next().unwrap())?;
+    Ok(stmts)
+}
+
 #[test]
 fn test_block() {
     assert!(parse_block(

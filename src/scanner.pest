@@ -291,7 +291,7 @@ STMT = {
     | CONTINUE_STMT
     | GOTO_STMT
     | RETURN_STMT
-    | DEF_VARS_LIST
+    | DEF_VARS
 }
 
 BLOCK = {
@@ -353,8 +353,6 @@ DEF_VAR = { SLOT ~ SCOLON }
 DEF_VARS = {
     STORAGE ~ TYPE ~ (NAME ~ (EQ ~ EXPR)?) ~ ("," ~ NAME ~ (EQ ~ EXPR)?)* ~ SCOLON
 }
-
-DEF_VARS_LIST = { DEF_VARS+ }
 
 MEMBER_LIST = {
     "{" ~ (SLOT ~ ";")* ~ "}"
