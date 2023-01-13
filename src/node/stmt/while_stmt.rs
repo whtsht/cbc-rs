@@ -3,9 +3,9 @@ use super::*;
 pub fn parse_while_stmt(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     let mut pairs = pair.into_inner();
     pairs.next().unwrap(); // while
-    let cnd = parse_expr_node(pairs.next().unwrap())?;
-    let stmt = parse_stmt_node(pairs.next().unwrap())?;
-    Ok(StmtNode::While { cond: cnd, stmt })
+    let cond = parse_expr_node(pairs.next().unwrap())?;
+    let stmt = Box::new(parse_stmt_node(pairs.next().unwrap())?);
+    Ok(StmtNode::While { cond, stmt })
 }
 
 #[test]

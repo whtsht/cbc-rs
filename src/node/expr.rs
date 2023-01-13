@@ -45,14 +45,14 @@ pub enum AssignOp {
 
 #[derive(Debug, Clone)]
 pub enum ExprNode {
-    Term(Node),
+    Term(TermNode),
     Assign {
-        term: Node,
+        term: TermNode,
         expr: Box<ExprNode>,
     },
     AssignOp {
         op: AssignOp,
-        term: Node,
+        term: TermNode,
         expr: Box<ExprNode>,
     },
     BinaryOp {
@@ -68,15 +68,13 @@ pub enum ExprNode {
     },
 }
 
-pub fn parse_expr_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+pub fn parse_expr_node(pair: Pair<Rule>) -> Result<ExprNode, NodeError> {
     debug_assert_eq!(pair.as_rule(), Rule::EXPR);
     let mut pairs = pair.into_inner().peekable();
 
     match pairs.peek().unwrap().as_rule() {
-        Rule::EXPR10 => Ok(Node::Expr(Box::new(expr10(
-            &mut pairs.next().unwrap().into_inner(),
-        )?))),
-        Rule::TERM => Ok(Node::Expr(Box::new(assign_op(pairs)?))),
+        Rule::EXPR10 => Ok(expr10(&mut pairs.next().unwrap().into_inner())?),
+        Rule::TERM => Ok(assign_op(pairs)?),
         _ => todo!(),
     }
 }

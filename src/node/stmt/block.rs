@@ -6,7 +6,7 @@ pub fn parse_block(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     Ok(StmtNode::Block { stmts })
 }
 
-pub fn parse_block_stmts(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+pub fn parse_block_stmts(pair: Pair<Rule>) -> Result<Vec<StmtNode>, NodeError> {
     let mut pairs = pair.into_inner();
     let stmts = parse_stmts(pairs.next().unwrap())?;
     Ok(stmts)

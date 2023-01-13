@@ -1,4 +1,7 @@
-use super::{param::parse_params_node, *};
+use super::{
+    param::{parse_params_node, ParamsNode},
+    *,
+};
 use crate::Rule;
 use pest::iterators::Pair;
 
@@ -29,10 +32,10 @@ pub enum TypeSuffix {
     Array,
     ArrayWithValue(i32),
     Pointer,
-    Params(Node),
+    Params(ParamsNode),
 }
 
-pub fn parse_type_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+pub fn parse_type_node(pair: Pair<Rule>) -> Result<TypeNode, NodeError> {
     let mut pairs = pair.into_inner();
     let base = parse_typebase_node(pairs.next().unwrap())?;
 
@@ -58,7 +61,7 @@ pub fn parse_type_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
         }
     }
 
-    Ok(Node::Type(Box::new(TypeNode { base, suffixs })))
+    Ok(TypeNode { base, suffixs })
 }
 
 pub fn parse_typebase_node(pair: Pair<Rule>) -> Result<TypeBaseNode, NodeError> {

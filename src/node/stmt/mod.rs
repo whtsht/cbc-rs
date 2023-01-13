@@ -21,33 +21,33 @@ mod while_stmt;
 #[derive(Debug, Clone)]
 pub enum StmtNode {
     None,
-    Expr(Node),
+    Expr(ExprNode),
     Block {
-        stmts: Vec<Node>,
+        stmts: Vec<StmtNode>,
     },
     If {
-        cond: Node,
-        then: Node,
-        _else: Node,
+        cond: ExprNode,
+        then: Box<StmtNode>,
+        _else: Box<StmtNode>,
     },
     While {
-        cond: Node,
-        stmt: Node,
+        cond: ExprNode,
+        stmt: Box<StmtNode>,
     },
     DoWhile {
-        cond: Node,
-        stmt: Node,
+        cond: ExprNode,
+        stmt: Box<StmtNode>,
     },
     For {
-        init: Node,
-        cond: Node,
-        term: Node,
-        stmt: Node,
+        init: ExprNode,
+        cond: ExprNode,
+        term: ExprNode,
+        stmt: Box<StmtNode>,
     },
     Switch {
-        cond: Node,
-        cases: Vec<(Vec<Node>, Vec<Node>)>,
-        default: Option<Vec<Node>>,
+        cond: ExprNode,
+        cases: Vec<(Vec<PrimaryNode>, Vec<StmtNode>)>,
+        default: Option<Vec<StmtNode>>,
     },
     Break,
     Continue,
@@ -55,12 +55,12 @@ pub enum StmtNode {
         label: String,
     },
     Return {
-        expr: Option<Node>,
+        expr: Option<ExprNode>,
     },
     DefVars(DefVars),
 }
 
-pub fn parse_stmts(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+pub fn parse_stmts(pair: Pair<Rule>) -> Result<Vec<StmtNode>, NodeError> {
     let mut pairs = pair.into_inner();
 
     let mut stmts = vec![];
@@ -70,45 +70,29 @@ pub fn parse_stmts(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
     Ok(stmts)
 }
 
-pub fn parse_stmt_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+pub fn parse_stmt_node(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     let mut pairs = pair.into_inner().peekable();
 
     match pairs.peek().unwrap().as_rule() {
         Rule::SCOLON => {
             pairs.next();
-            Ok(Node::Stmt(Box::new(StmtNode::None)))
+            Ok(StmtNode::None)
         }
-        Rule::BLOCK => Ok(Node::Stmt(Box::new(parse_block(pairs.next().unwrap())?))),
+        Rule::BLOCK => Ok(parse_block(pairs.next().unwrap())?),
         Rule::EXPR => {
-            let node = Ok(Node::Stmt(Box::new(StmtNode::Expr(parse_expr_node(
-                pairs.next().unwrap(),
-            )?))));
+            let node = Ok(StmtNode::Expr(parse_expr_node(pairs.next().unwrap())?));
             pairs.next(); // Skip a semicolon
             node
         }
-        Rule::IF_STMT => Ok(Node::Stmt(Box::new(parse_if_stmt(pairs.next().unwrap())?))),
-        Rule::WHILE_STMT => Ok(Node::Stmt(Box::new(parse_while_stmt(
-            pairs.next().unwrap(),
-        )?))),
-        Rule::DOWHILE_STMT => Ok(Node::Stmt(Box::new(parse_dowhile_stmt(
-            pairs.next().unwrap(),
-        )?))),
-        Rule::FOR_STMT => Ok(Node::Stmt(Box::new(parse_for_stmt(pairs.next().unwrap())?))),
-        Rule::SWITCH_STMT => Ok(Node::Stmt(Box::new(parse_switch_stmt(
-            pairs.next().unwrap(),
-        )?))),
-        Rule::BREAK_STMT => Ok(Node::Stmt(Box::new(parse_break_stmt(
-            pairs.next().unwrap(),
-        )?))),
-        Rule::GOTO_STMT => Ok(Node::Stmt(Box::new(parse_goto_stmt(
-            pairs.next().unwrap(),
-        )?))),
-        Rule::RETURN_STMT => Ok(Node::Stmt(Box::new(parse_return_stmt(
-            pairs.next().unwrap(),
-        )?))),
-        Rule::DEF_VARS => Ok(Node::Stmt(Box::new(StmtNode::DefVars(parse_def_vars(
-            pairs.next().unwrap(),
-        )?)))),
+        Rule::IF_STMT => Ok(parse_if_stmt(pairs.next().unwrap())?),
+        Rule::WHILE_STMT => Ok(parse_while_stmt(pairs.next().unwrap())?),
+        Rule::DOWHILE_STMT => Ok(parse_dowhile_stmt(pairs.next().unwrap())?),
+        Rule::FOR_STMT => Ok(parse_for_stmt(pairs.next().unwrap())?),
+        Rule::SWITCH_STMT => Ok(parse_switch_stmt(pairs.next().unwrap())?),
+        Rule::BREAK_STMT => Ok(parse_break_stmt(pairs.next().unwrap())?),
+        Rule::GOTO_STMT => Ok(parse_goto_stmt(pairs.next().unwrap())?),
+        Rule::RETURN_STMT => Ok(parse_return_stmt(pairs.next().unwrap())?),
+        Rule::DEF_VARS => Ok(StmtNode::DefVars(parse_def_vars(pairs.next().unwrap())?)),
         e => todo!("{:?}", e),
     }
 }

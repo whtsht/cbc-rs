@@ -8,7 +8,7 @@ pub fn parse_for_stmt(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     let cond = parse_expr_node(pairs.next().unwrap())?;
     pairs.next().unwrap(); // semicolon
     let term = parse_expr_node(pairs.next().unwrap())?;
-    let stmt = parse_stmt_node(pairs.next().unwrap())?;
+    let stmt = Box::new(parse_stmt_node(pairs.next().unwrap())?);
     Ok(StmtNode::For {
         init,
         cond,

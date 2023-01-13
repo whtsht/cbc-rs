@@ -15,7 +15,13 @@ pub fn parse_switch_stmt(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
 
 pub fn case_clauses(
     pair: Pair<Rule>,
-) -> Result<(Vec<(Vec<Node>, Vec<Node>)>, Option<Vec<Node>>), NodeError> {
+) -> Result<
+    (
+        Vec<(Vec<PrimaryNode>, Vec<StmtNode>)>,
+        Option<Vec<StmtNode>>,
+    ),
+    NodeError,
+> {
     let mut pairs = pair.into_inner().peekable();
 
     let mut clist = vec![];
@@ -32,7 +38,7 @@ pub fn case_clauses(
     }
 }
 
-pub fn case_clause(pair: Pair<Rule>) -> Result<(Vec<Node>, Vec<Node>), NodeError> {
+pub fn case_clause(pair: Pair<Rule>) -> Result<(Vec<PrimaryNode>, Vec<StmtNode>), NodeError> {
     let mut pairs = pair.into_inner();
     let cases = cases(pairs.next().unwrap())?;
     let body = case_body(pairs.next().unwrap())?;
@@ -40,13 +46,13 @@ pub fn case_clause(pair: Pair<Rule>) -> Result<(Vec<Node>, Vec<Node>), NodeError
     Ok((cases, body))
 }
 
-pub fn default_clause(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+pub fn default_clause(pair: Pair<Rule>) -> Result<Vec<StmtNode>, NodeError> {
     let mut pairs = pair.into_inner();
     pairs.next().unwrap();
     case_body(pairs.next().unwrap())
 }
 
-pub fn cases(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+pub fn cases(pair: Pair<Rule>) -> Result<Vec<PrimaryNode>, NodeError> {
     let mut pairs = pair.into_inner();
     pairs.next().unwrap(); // case
     let mut plist = vec![];
@@ -59,7 +65,7 @@ pub fn cases(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
     Ok(plist)
 }
 
-pub fn case_body(pair: Pair<Rule>) -> Result<Vec<Node>, NodeError> {
+pub fn case_body(pair: Pair<Rule>) -> Result<Vec<StmtNode>, NodeError> {
     Ok(parse_stmts(pair.into_inner().next().unwrap())?)
 }
 

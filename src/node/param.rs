@@ -10,7 +10,7 @@ pub enum ParamsNode {
 
 #[derive(Debug, Clone)]
 pub struct Param {
-    _type: Node,
+    _type: TypeNode,
     name: String,
 }
 
@@ -24,12 +24,12 @@ pub fn parse_param(pair: Pair<Rule>) -> Result<Param, NodeError> {
     Ok(Param { _type, name })
 }
 
-pub fn parse_params_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
+pub fn parse_params_node(pair: Pair<Rule>) -> Result<ParamsNode, NodeError> {
     debug_assert_eq!(pair.as_rule(), Rule::PARAMS);
     let mut pairs = pair.into_inner().peekable();
 
     if let Some(Rule::VOID) = pairs.peek().map(|p| p.as_rule()) {
-        return Ok(Node::Params(Box::new(ParamsNode::Void)));
+        return Ok(ParamsNode::Void);
     }
 
     let mut pairs = pairs.next().unwrap().into_inner();
@@ -39,19 +39,19 @@ pub fn parse_params_node(pair: Pair<Rule>) -> Result<Node, NodeError> {
         match pair.as_rule() {
             Rule::PARAM => fixed.push(parse_param(pair)?),
             Rule::VAR_PARAMS => {
-                return Ok(Node::Params(Box::new(ParamsNode::Some {
+                return Ok(ParamsNode::Some {
                     fixed,
                     variable: true,
-                })))
+                })
             }
             _ => todo!(),
         }
     }
 
-    Ok(Node::Params(Box::new(ParamsNode::Some {
+    Ok(ParamsNode::Some {
         fixed,
         variable: false,
-    })))
+    })
 }
 
 #[test]

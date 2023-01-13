@@ -6,7 +6,13 @@ use self::{
     def_union::def_union,
     def_var::{parse_def_vars, DefVars},
 };
-use super::{type_::parse_type_node, Node, NodeError};
+use super::{
+    expr::ExprNode,
+    param::ParamsNode,
+    stmt::StmtNode,
+    type_::{parse_type_node, TypeNode},
+    Node, NodeError,
+};
 use crate::Rule;
 use pest::iterators::Pair;
 
@@ -22,18 +28,18 @@ pub enum DefNode {
     Vars(DefVars),
     Fun {
         is_static: bool,
-        _type: Node,
+        _type: TypeNode,
         name: String,
-        params: Node,
-        block: Vec<Node>,
+        params: ParamsNode,
+        block: Vec<StmtNode>,
     },
     Const {
-        _type: Node,
+        _type: TypeNode,
         name: String,
-        expr: Node,
+        expr: ExprNode,
     },
     Type {
-        _type: Node,
+        _type: TypeNode,
         ident: String,
     },
     Struct {
@@ -48,7 +54,7 @@ pub enum DefNode {
 
 #[derive(Debug, Clone)]
 pub struct Member {
-    _type: Node,
+    _type: TypeNode,
     name: String,
 }
 

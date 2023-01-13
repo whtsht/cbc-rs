@@ -3,11 +3,11 @@ use super::*;
 pub fn parse_dowhile_stmt(pair: Pair<Rule>) -> Result<StmtNode, NodeError> {
     let mut pairs = pair.into_inner();
     pairs.next().unwrap(); // do
-    let stmt = parse_stmt_node(pairs.next().unwrap())?;
+    let stmt = Box::new(parse_stmt_node(pairs.next().unwrap())?);
     pairs.next().unwrap(); // while
-    let cnd = parse_expr_node(pairs.next().unwrap())?;
+    let cond = parse_expr_node(pairs.next().unwrap())?;
     pairs.next().unwrap(); // semicolon
-    Ok(StmtNode::DoWhile { cond: cnd, stmt })
+    Ok(StmtNode::DoWhile { cond, stmt })
 }
 
 #[test]

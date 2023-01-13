@@ -5,7 +5,7 @@ use std::iter::Peekable;
 
 #[derive(Debug, Clone)]
 pub struct DefVars {
-    pub _type: Node,
+    pub _type: TypeNode,
     pub is_static: bool,
     pub vars: Vec<Var>,
 }
@@ -13,7 +13,7 @@ pub struct DefVars {
 #[derive(Debug, Clone)]
 pub enum Var {
     Uninit { name: String },
-    Init { name: String, expr: Node },
+    Init { name: String, expr: ExprNode },
 }
 
 pub fn parse_def_vars(pair: Pair<Rule>) -> Result<DefVars, NodeError> {
@@ -65,6 +65,7 @@ fn test_def_var() {
     )
     .is_ok());
 
+    use crate::node::stmt::parse_stmt_node;
     assert!(parse_stmt_node(
         CBCScanner::parse(
             Rule::STMT,

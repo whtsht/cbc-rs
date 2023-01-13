@@ -16,10 +16,8 @@ use self::def::DefNode;
 use self::expr::*;
 use self::import::parse_import_node;
 use self::import::ImportNode;
-use self::param::*;
 use self::primary::*;
 use self::sizeof::*;
-use self::stmt::*;
 use self::term::*;
 use self::type_::*;
 use self::unary::*;
@@ -68,14 +66,6 @@ pub const DDDOT: &str = "...";
 
 #[derive(Debug, Clone)]
 pub enum Node {
-    BinaryOp(Box<BinaryOpNode>),
-    Primary(Box<PrimaryNode>),
-    Type(Box<TypeNode>),
-    Unary(Box<UnaryNode>),
-    Term(Box<TermNode>),
-    Params(Box<ParamsNode>),
-    Expr(Box<ExprNode>),
-    Stmt(Box<StmtNode>),
     Def(Box<DefNode>),
     Import(Box<ImportNode>),
 }
@@ -99,13 +89,6 @@ pub enum NodeErrorType {
     Stmt,
     Def,
     Import,
-}
-
-#[derive(Debug, Clone)]
-pub struct BinaryOpNode {
-    operator: &'static str,
-    lhs: Node,
-    rhs: Node,
 }
 
 pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
