@@ -94,10 +94,10 @@ pub enum NodeErrorType {
 pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
     let mut nodes = vec![];
     let mut pairs = CBCScanner::parse(Rule::FILE, src)
-        .or_else(|_| {
+        .or_else(|e| {
             Err(NodeError {
                 _type: NodeErrorType::Token,
-                message: String::from("failed to scan"),
+                message: format!("failed to scan {:?}", e),
             })
         })?
         .next()

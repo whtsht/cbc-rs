@@ -15,17 +15,19 @@ pub enum UnaryNode {
     And(TermNode),
     SizeofUnary(Box<UnaryNode>),
     SizeofType(TypeNode),
-    Suffix(PrimaryNode, Vec<SuffixOp>),
+    Suffix(PrimaryNode, Box<SuffixOp>),
+    Primary(PrimaryNode),
 }
 
 #[derive(Debug, Clone)]
 pub enum SuffixOp {
-    Increment,
-    Decrement,
-    Dot(String),
-    Arrow(String),
-    Array(ExprNode),
-    CallFu(Vec<ExprNode>),
+    None,
+    Increment(Box<SuffixOp>),
+    Decrement(Box<SuffixOp>),
+    Dot(String, Box<SuffixOp>),
+    Arrow(String, Box<SuffixOp>),
+    Array(ExprNode, Box<SuffixOp>),
+    CallFu(Vec<ExprNode>, Box<SuffixOp>),
 }
 
 pub fn parse_unary_node(pair: Pair<Rule>) -> Result<UnaryNode, NodeError> {
@@ -50,37 +52,47 @@ pub fn parse_unary_node(pair: Pair<Rule>) -> Result<UnaryNode, NodeError> {
     Ok(node)
 }
 
-pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<UnaryNode, NodeError> {
-    let primary = parse_primary_node(pairs.next().unwrap())?;
-
-    let mut ops = vec![];
-
-    while let Some(pair) = pairs.next() {
+fn suffix_op(mut pairs: Peekable<Pairs<Rule>>) -> Result<Box<SuffixOp>, NodeError> {
+    let op = if let Some(pair) = pairs.next() {
         match pair.as_rule() {
-            Rule::PPLUS => ops.push(SuffixOp::Increment),
-            Rule::MMINUS => ops.push(SuffixOp::Decrement),
+            Rule::PPLUS => SuffixOp::Increment(suffix_op(pairs)?),
+            Rule::MMINUS => SuffixOp::Decrement(suffix_op(pairs)?),
             Rule::DOT => {
                 let name = pairs.next().unwrap().as_str().into();
-                ops.push(SuffixOp::Dot(name))
+                SuffixOp::Dot(name, suffix_op(pairs)?)
             }
             Rule::ARROW => {
                 let name = pairs.next().unwrap().as_str().into();
-                ops.push(SuffixOp::Arrow(name))
+                SuffixOp::Arrow(name, suffix_op(pairs)?)
             }
             Rule::LSB => {
                 let idx = parse_expr_node(pairs.next().unwrap())?;
-                ops.push(SuffixOp::Array(idx));
-                pairs.next(); // ]
+                pairs.next();
+                SuffixOp::Array(idx, suffix_op(pairs)?)
             }
             Rule::LPT => {
-                ops.push(SuffixOp::CallFu(parse_args(pairs.next().unwrap())?));
-                pairs.next(); // )
+                let args = pairs.next().unwrap();
+                if args.as_rule() != Rule::RPT {
+                    pairs.next();
+                }
+                SuffixOp::CallFu(parse_args(args)?, suffix_op(pairs)?)
             }
             e => panic!("{:?}", e),
         }
-    }
+    } else {
+        SuffixOp::None
+    };
 
-    Ok(UnaryNode::Suffix(primary, ops))
+    Ok(Box::new(op))
+}
+
+pub fn parse_suffix_node(mut pairs: Peekable<Pairs<Rule>>) -> Result<UnaryNode, NodeError> {
+    let primary = parse_primary_node(pairs.next().unwrap())?;
+    if pairs.peek().is_none() {
+        Ok(UnaryNode::Primary(primary))
+    } else {
+        Ok(UnaryNode::Suffix(primary, suffix_op(pairs)?))
+    }
 }
 
 pub fn parse_args(pair: Pair<Rule>) -> Result<Vec<ExprNode>, NodeError> {

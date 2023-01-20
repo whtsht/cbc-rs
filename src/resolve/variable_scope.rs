@@ -7,7 +7,7 @@ use crate::node::primary::PrimaryNode;
 use crate::node::stmt::StmtNode;
 use crate::node::term::TermNode;
 use crate::node::type_::TypeNode;
-use crate::node::unary::UnaryNode;
+use crate::node::unary::{SuffixOp, UnaryNode};
 use crate::node::Node;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -37,6 +37,21 @@ pub enum Entity {
         is_static: bool,
         params: ParamsNode,
     },
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum EntityType {
+    Variable,
+    Function,
+}
+
+impl Entity {
+    pub fn get_type(&self) -> EntityType {
+        match self {
+            Entity::Variable { .. } => EntityType::Variable,
+            Entity::Function { .. } => EntityType::Function,
+        }
+    }
 }
 
 pub fn gen_scope_toplevel(
@@ -80,12 +95,12 @@ pub fn gen_scope_toplevel(
     Ok(scope)
 }
 
-pub fn get_ref(scope: &Rc<Scope>, name: &str) -> Option<Entity> {
+pub fn get_ref(scope: &Rc<Scope>, name: &str, entity_type: EntityType) -> Option<Entity> {
     match scope.entities.borrow().get(name) {
-        Some(e) => Some(e.clone()),
-        None => {
+        Some(e) if e.get_type() == entity_type => Some(e.clone()),
+        Some(_) | None => {
             if let Some(parent) = scope.parent.borrow().upgrade() {
-                get_ref(&parent, name)
+                get_ref(&parent, name, entity_type)
             } else {
                 None
             }
@@ -107,6 +122,11 @@ pub fn gen_scope_stmts(
             StmtNode::DefVars(vars) => apply_vars(vars, &scope)?,
             StmtNode::Expr(expr) => {
                 get_variables_expr(expr, &scope)?;
+            }
+            StmtNode::Return { expr } => {
+                if let Some(expr) = expr {
+                    get_variables_expr(expr, &scope)?;
+                }
             }
             e => panic!("{:#?}", e),
         }
@@ -164,7 +184,29 @@ pub fn get_variables_unary(unary: &mut UnaryNode, scope: &Rc<Scope>) -> Result<(
         | UnaryNode::Tilde(term)
         | UnaryNode::Star(term)
         | UnaryNode::And(term) => get_variables_term(term, scope),
-        UnaryNode::Suffix(primary, _) => get_variables_primary(primary, scope),
+        UnaryNode::Suffix(primary, suffix) => resolve_suffixop(primary, suffix, scope),
+        UnaryNode::Primary(primary) => get_variables_primary(primary, scope),
+        _ => todo!(),
+    }
+}
+
+pub fn resolve_suffixop(
+    primary: &mut PrimaryNode,
+    suffix: &mut SuffixOp,
+    scope: &Rc<Scope>,
+) -> Result<(), ResolverError> {
+    match suffix {
+        SuffixOp::None => Ok(()),
+        SuffixOp::CallFu(args, suffix) => {
+            for arg in args {
+                get_variables_expr(arg, scope)?;
+            }
+            resolve_suffixop(primary, suffix, scope)
+        }
+        SuffixOp::Array(idx, suffix) => {
+            get_variables_expr(idx, scope)?;
+            resolve_suffixop(primary, suffix, scope)
+        }
         _ => todo!(),
     }
 }
@@ -175,7 +217,7 @@ pub fn get_variables_primary(
 ) -> Result<(), ResolverError> {
     match primary {
         PrimaryNode::Identifier(name, _) => {
-            if let Some(entity) = get_ref(scope, name) {
+            if let Some(entity) = get_ref(scope, name, EntityType::Variable) {
                 *primary = PrimaryNode::Identifier(name.clone(), Some(entity));
             } else {
                 Err(ResolverError {
@@ -219,9 +261,9 @@ pub fn apply_vars(vars: &mut DefVars, scope: &Rc<Scope>) -> Result<(), ResolverE
 }
 
 #[test]
-fn test_scope() {
+fn test_scope_var() {
     let mut nodes = crate::node::parse(
-        r#"int a = 1, b = 2, c = 3;
+        r#"int a = 1; int b = 2, c = 3;
         void main(void) {
             int d = 10;
             int f = 1, g = 2;
@@ -245,12 +287,32 @@ fn test_scope() {
 
     let mut nodes = crate::node::parse(
         r#"
+        int d(void) {
+            return 1;
+        }
         void main(void) {
-            int a = b + d;
+            int a = d;
         }"#,
     )
     .unwrap();
     let scope = Rc::new(Scope::default());
     let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new());
     assert!(scope_tree.is_err());
+}
+
+#[test]
+fn test_scope_fun() {
+    let mut nodes = crate::node::parse(
+        r#"
+        int d(void) {
+            return 1;
+        }
+        void main(void) {
+            int a = d();
+        }"#,
+    )
+    .unwrap();
+    let scope = Rc::new(Scope::default());
+    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new());
+    assert!(scope_tree.is_ok());
 }

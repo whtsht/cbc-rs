@@ -205,7 +205,7 @@ POSTFIX = {
       | DOT ~ NAME
       | ARROW ~ NAME
       | LSB ~ EXPR ~ RSB
-      | LPT ~ ARGS ~ RPT
+      | LPT ~ ARGS? ~ RPT
       )*
 }
 
