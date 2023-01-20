@@ -1,3 +1,5 @@
+use crate::resolve::variable_scope::Entity;
+
 use super::*;
 use crate::Rule;
 use pest::iterators::Pair;
@@ -7,7 +9,7 @@ pub enum PrimaryNode {
     Integer(i64),
     String(String),
     Char(char),
-    Identifier(String),
+    Identifier(String, Option<Entity>),
 }
 
 pub fn parse_primary_node(pair: Pair<Rule>) -> Result<PrimaryNode, NodeError> {
@@ -28,7 +30,7 @@ pub fn parse_primary_node(pair: Pair<Rule>) -> Result<PrimaryNode, NodeError> {
         }
         Rule::IDENTIFIER => {
             let s = pair.as_str().into();
-            PrimaryNode::Identifier(s)
+            PrimaryNode::Identifier(s, None)
         }
         _ => panic!("not primary, found {:?}", pair.as_rule()),
     };

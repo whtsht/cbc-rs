@@ -1,1 +1,1 @@
-mod variable_scope;
+pub mod variable_scope;

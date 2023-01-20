@@ -6,5 +6,5 @@ extern crate pest_derive;
 #[grammar = "scanner.pest"]
 pub struct CBCScanner;
 
-mod node;
-mod resolve;
+pub mod node;
+pub mod resolve;
