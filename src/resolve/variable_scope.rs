@@ -319,6 +319,7 @@ fn test_scope_top() {
             int f = 1, g = 2;
             a = d + f + g + b + c;
         }
+        /* hello */
         int b = 2, c = 3;
            "#,
     )

@@ -1,6 +1,6 @@
-LINE_COMMENT = _{ "//" ~ (!"\n" ~ ANY)* }
-BLOCK_COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
-WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+LINE_COMMENT = { "//" ~ (!"\n" ~ ANY)* ~ "/n"? }
+BLOCK_COMMENT = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
+WHITESPACE = _{ LINE_COMMENT | BLOCK_COMMENT | " " | "\t" | "\r" | "\n" }
 SP = _{ " " | "\t" }
 
 // Keywords
@@ -393,4 +393,8 @@ TOP_DEF = {
     | DEF_TYPE
 }
 
-FILE = { SOI ~ IMPORT_STMT* ~ TOP_DEF* ~ EOI }
+TOP = _{
+    IMPORT_STMT | TOP_DEF
+}
+
+FILE = { SOI ~ TOP* ~ EOI }

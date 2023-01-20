@@ -106,7 +106,7 @@ fn integer() {
 fn comment() {
     assert_eq!(
         test_one_token(Rule::LINE_COMMENT, "// hello world"),
-        Token::None
+        Token::Some("// hello world", Rule::LINE_COMMENT)
     );
     assert_eq!(
         test_one_token(
@@ -115,7 +115,12 @@ fn comment() {
         block comment
         */"#
         ),
-        Token::None
+        Token::Some(
+            r#"/*
+        block comment
+        */"#,
+            Rule::BLOCK_COMMENT
+        )
     );
 }
 
