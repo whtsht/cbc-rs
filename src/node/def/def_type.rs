@@ -19,6 +19,7 @@ fn test_type() {
     use crate::node::def::parse_topdef_node;
     use crate::CBCScanner;
     use pest::Parser;
+
     assert!(parse_topdef_node(
         CBCScanner::parse(Rule::TOP_DEF, "typedef int Point;",)
             .unwrap()

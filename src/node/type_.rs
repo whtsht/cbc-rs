@@ -66,43 +66,47 @@ pub fn parse_type_node(pair: Pair<Rule>) -> Result<TypeNode, NodeError> {
 }
 
 pub fn parse_typebase_node(pair: Pair<Rule>) -> Result<TypeBaseNode, NodeError> {
-    let mut pairs = pair.into_inner();
-    let first = pairs.next().unwrap();
-    let second = pairs.peek();
-    match (first.as_rule(), second.map(|x| x.as_rule())) {
-        (Rule::VOID, None) => Ok(TypeBaseNode::Void),
-        (Rule::CHAR, None) => Ok(TypeBaseNode::Char),
-        (Rule::SHORT, None) => Ok(TypeBaseNode::Short),
-        (Rule::INT, None) => Ok(TypeBaseNode::Int),
-        (Rule::LONG, None) => Ok(TypeBaseNode::Long),
-        (Rule::UNSIGNED, Some(Rule::CHAR)) => {
-            pairs.next();
-            Ok(TypeBaseNode::UnsignedChar)
+    println!("{:?}", pair);
+    let mut pairs = pair.into_inner().peekable();
+    match pairs.peek().unwrap().as_rule() {
+        Rule::VOID => Ok(TypeBaseNode::Void),
+        Rule::CHAR => Ok(TypeBaseNode::Char),
+        Rule::SHORT => Ok(TypeBaseNode::Short),
+        Rule::INT => Ok(TypeBaseNode::Int),
+        Rule::LONG => Ok(TypeBaseNode::Long),
+        Rule::UNSIGNED_CHAR => Ok(TypeBaseNode::UnsignedChar),
+        Rule::UNSIGNED_SHORT => Ok(TypeBaseNode::UnsignedShort),
+        Rule::UNSIGNED_INT => Ok(TypeBaseNode::UnsignedInt),
+        Rule::UNSIGNED_LONG => Ok(TypeBaseNode::UnsignedLong),
+        Rule::STRUCT_IDENT => {
+            let ident = pairs
+                .next()
+                .unwrap()
+                .into_inner()
+                .nth(1)
+                .unwrap()
+                .as_str()
+                .into();
+
+            Ok(TypeBaseNode::Struct(ident, None))
         }
-        (Rule::UNSIGNED, Some(Rule::SHORT)) => {
-            pairs.next();
-            Ok(TypeBaseNode::UnsignedShort)
+        Rule::UNION_IDENT => {
+            let ident = pairs
+                .next()
+                .unwrap()
+                .into_inner()
+                .nth(1)
+                .unwrap()
+                .as_str()
+                .into();
+
+            Ok(TypeBaseNode::Union(ident, None))
         }
-        (Rule::UNSIGNED, Some(Rule::INT)) => {
-            pairs.next();
-            Ok(TypeBaseNode::UnsignedInt)
-        }
-        (Rule::UNSIGNED, Some(Rule::LONG)) => {
-            pairs.next();
-            Ok(TypeBaseNode::UnsignedLong)
-        }
-        (Rule::STRUCT, Some(Rule::IDENTIFIER)) => {
-            let ident = pairs.next().unwrap().as_str();
-            Ok(TypeBaseNode::Struct(ident.into(), None))
-        }
-        (Rule::UNION, Some(Rule::IDENTIFIER)) => {
-            let ident = pairs.next().unwrap().as_str();
-            Ok(TypeBaseNode::Union(ident.into(), None))
-        }
-        err => Err(NodeError {
-            _type: NodeErrorType::Type,
-            message: format!("typebase error: {:?}", err),
-        }),
+        Rule::IDENTIFIER => Ok(TypeBaseNode::Identifier(
+            pairs.next().unwrap().as_str().into(),
+            None,
+        )),
+        e => panic!("{:?}", e),
     }
 }
 

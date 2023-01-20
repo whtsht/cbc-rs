@@ -43,6 +43,9 @@ pub enum Entity {
     Union {
         member_list: Vec<Member>,
     },
+    TypeDef {
+        _type: TypeNode,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -51,6 +54,7 @@ pub enum EntityType {
     Function,
     Struct,
     Union,
+    TypeDef,
 }
 
 impl Entity {
@@ -60,6 +64,7 @@ impl Entity {
             Entity::Function { .. } => EntityType::Function,
             Entity::Struct { .. } => EntityType::Struct,
             Entity::Union { .. } => EntityType::Union,
+            Entity::TypeDef { .. } => EntityType::TypeDef,
         }
     }
 }
@@ -143,6 +148,18 @@ pub fn gen_scope_toplevel(
                         );
                     }
                 }
+                DefNode::Type { _type, ident } => {
+                    if !recursive {
+                        contain(&scope, &ident)?;
+
+                        scope.entities.borrow_mut().insert(
+                            ident.clone(),
+                            Entity::TypeDef {
+                                _type: _type.clone(),
+                            },
+                        );
+                    }
+                }
                 _ => todo!(),
             },
             e => panic!("{:#?}", e),
@@ -152,6 +169,7 @@ pub fn gen_scope_toplevel(
 }
 
 pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), ResolverError> {
+    println!("{:?}", type_node);
     match &mut type_node.base {
         TypeBaseNode::Struct(name, entity) => {
             if let Some(e) = get_ref(&scope, &name, EntityType::Struct) {
@@ -168,6 +186,15 @@ pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), R
             } else {
                 Err(ResolverError {
                     message: format!("union {} is not defined", name),
+                })?;
+            }
+        }
+        TypeBaseNode::Identifier(name, entity) => {
+            if let Some(e) = get_ref(&scope, &name, EntityType::TypeDef) {
+                *entity = Some(Box::new(e));
+            } else {
+                Err(ResolverError {
+                    message: format!("type {} is not defined", name),
                 })?;
             }
         }
@@ -357,6 +384,7 @@ fn test_scope_var() {
         void main(void) {
             int d = 10;
             int f = 1, g = 2;
+            int[4] a;
             a = d + f + g + b + c;
         }
            "#,
@@ -390,7 +418,6 @@ fn test_scope_fun() {
     .unwrap();
     let scope = Rc::new(Scope::default());
     let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true);
-    println!("{:#?}", nodes);
     assert!(scope_tree.is_ok());
 }
 
@@ -439,14 +466,24 @@ fn test_scope_struct_union() {
             unsigned long b;
         }
 
+        typedef union B unionC;
+        typedef unionC unionD;
+
         void main(void) {
             struct A a;
             a.a = 1;
             a.b = 2;
 
+
             union B b;
             b.a = 2;
             b.b = 3;
+
+            unionC c;
+            c.a = 2;
+
+            unionD d;
+            d.b = 3;
         }
         "#,
     )
@@ -457,4 +494,6 @@ fn test_scope_struct_union() {
     let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
     assert!(scope_tree.entities.borrow().get("A").is_some());
     assert!(scope_tree.entities.borrow().get("B").is_some());
+    assert!(scope_tree.entities.borrow().get("unionC").is_some());
+    assert!(scope_tree.entities.borrow().get("unionD").is_some());
 }

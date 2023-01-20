@@ -136,18 +136,42 @@ IDENTIFIER = @{
     !KEYWORD ~ (('a'..'z' | 'A'..'Z' | "_") ~ ('a'..'z' | 'A'..'Z' | "_" | '0'..'9')*)
 }
 
+UNSIGNED_CHAR = @{
+    UNSIGNED ~ SP+ ~ CHAR
+}
+
+UNSIGNED_SHORT = @{
+    UNSIGNED ~ SP+ ~ SHORT
+}
+
+UNSIGNED_INT = @{
+    UNSIGNED ~ SP+ ~ INT
+}
+
+UNSIGNED_LONG = @{
+    UNSIGNED ~ SP+ ~ LONG
+}
+
+STRUCT_IDENT = ${
+    STRUCT ~ SP+ ~ IDENTIFIER
+}
+
+UNION_IDENT = ${
+    UNION ~ SP+ ~ IDENTIFIER
+}
+
 TYPEREF_BASE = {
      VOID
    | CHAR
    | SHORT
    | INT
    | LONG
-   | UNSIGNED ~ CHAR
-   | UNSIGNED ~ SHORT
-   | UNSIGNED ~ INT
-   | UNSIGNED ~ LONG
-   | STRUCT ~ IDENTIFIER
-   | UNION ~ IDENTIFIER
+   | UNSIGNED_CHAR
+   | UNSIGNED_SHORT
+   | UNSIGNED_INT
+   | UNSIGNED_LONG
+   | STRUCT_IDENT
+   | UNION_IDENT
    | IDENTIFIER
 }
 

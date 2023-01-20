@@ -222,6 +222,10 @@ fn def_type() {
         test_one_token(Rule::DEF_TYPE, "typedef struct point Point;"),
         Token::Some("typedef struct point Point;", Rule::DEF_TYPE)
     );
+    assert_eq!(
+        test_one_token(Rule::DEF_TYPE, "typedef structP structD;"),
+        Token::Some("typedef structP structD;", Rule::DEF_TYPE)
+    );
 }
 
 #[test]
