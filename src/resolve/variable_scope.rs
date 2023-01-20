@@ -58,6 +58,7 @@ pub fn gen_scope_toplevel(
     nodes: &mut Vec<Node>,
     scope: Rc<Scope>,
     parent: Weak<Scope>,
+    recursive: bool,
 ) -> Result<Rc<Scope>, ResolverError> {
     if parent.upgrade().is_some() {
         *scope.parent.borrow_mut() = parent;
@@ -83,9 +84,14 @@ pub fn gen_scope_toplevel(
                         },
                     );
 
-                    let local =
-                        gen_scope_stmts(block, Rc::new(Scope::default()), Rc::downgrade(&scope))?;
-                    (*scope.localscope.borrow_mut()).push(local);
+                    if recursive {
+                        let local = gen_scope_stmts(
+                            block,
+                            Rc::new(Scope::default()),
+                            Rc::downgrade(&scope),
+                        )?;
+                        (*scope.localscope.borrow_mut()).push(local);
+                    }
                 }
                 _ => todo!(),
             },
@@ -263,18 +269,19 @@ pub fn apply_vars(vars: &mut DefVars, scope: &Rc<Scope>) -> Result<(), ResolverE
 #[test]
 fn test_scope_var() {
     let mut nodes = crate::node::parse(
-        r#"int a = 1; int b = 2, c = 3;
+        r#"int a = 1;
+        int b = 2, c = 3;
         void main(void) {
             int d = 10;
             int f = 1, g = 2;
-            a = d + f + g;
+            a = d + f + g + b + c;
         }
            "#,
     )
     .unwrap();
 
     let scope = Rc::new(Scope::default());
-    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new()).unwrap();
+    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
     assert!(scope_tree.localscope.borrow()[0]
         .entities
         .borrow()
@@ -284,20 +291,6 @@ fn test_scope_var() {
     assert!(scope_tree.entities.borrow().get("a").is_some());
     assert!(scope_tree.entities.borrow().get("b").is_some());
     assert!(scope_tree.entities.borrow().get("c").is_some());
-
-    let mut nodes = crate::node::parse(
-        r#"
-        int d(void) {
-            return 1;
-        }
-        void main(void) {
-            int a = d;
-        }"#,
-    )
-    .unwrap();
-    let scope = Rc::new(Scope::default());
-    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new());
-    assert!(scope_tree.is_err());
 }
 
 #[test]
@@ -313,6 +306,36 @@ fn test_scope_fun() {
     )
     .unwrap();
     let scope = Rc::new(Scope::default());
-    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new());
+    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true);
     assert!(scope_tree.is_ok());
+}
+
+#[test]
+fn test_scope_top() {
+    let mut nodes = crate::node::parse(
+        r#"int a = 1;
+        void main(void) {
+            int d = 10;
+            int f = 1, g = 2;
+            a = d + f + g + b + c;
+        }
+        int b = 2, c = 3;
+           "#,
+    )
+    .unwrap();
+
+    let scope =
+        gen_scope_toplevel(&mut nodes, Rc::new(Scope::default()), Weak::new(), false).unwrap();
+
+    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+
+    assert!(scope_tree.localscope.borrow()[0]
+        .entities
+        .borrow()
+        .get("d")
+        .is_some());
+
+    assert!(scope_tree.entities.borrow().get("a").is_some());
+    assert!(scope_tree.entities.borrow().get("b").is_some());
+    assert!(scope_tree.entities.borrow().get("c").is_some());
 }
