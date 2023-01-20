@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 use crate::node::def::def_var::{DefVars, Var};
-use crate::node::def::DefNode;
+use crate::node::def::{DefNode, Member};
 use crate::node::expr::ExprNode;
 use crate::node::param::ParamsNode;
 use crate::node::primary::PrimaryNode;
 use crate::node::stmt::StmtNode;
 use crate::node::term::TermNode;
-use crate::node::type_::TypeNode;
+use crate::node::type_::{TypeBaseNode, TypeNode};
 use crate::node::unary::{SuffixOp, UnaryNode};
 use crate::node::Node;
 use std::cell::RefCell;
@@ -37,12 +37,20 @@ pub enum Entity {
         is_static: bool,
         params: ParamsNode,
     },
+    Struct {
+        member_list: Vec<Member>,
+    },
+    Union {
+        member_list: Vec<Member>,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum EntityType {
     Variable,
     Function,
+    Struct,
+    Union,
 }
 
 impl Entity {
@@ -50,7 +58,19 @@ impl Entity {
         match self {
             Entity::Variable { .. } => EntityType::Variable,
             Entity::Function { .. } => EntityType::Function,
+            Entity::Struct { .. } => EntityType::Struct,
+            Entity::Union { .. } => EntityType::Union,
         }
+    }
+}
+
+pub fn contain(scope: &Rc<Scope>, name: &str) -> Result<(), ResolverError> {
+    if scope.entities.borrow().contains_key(name) {
+        Err(ResolverError {
+            message: format!("{} is already defined", name),
+        })
+    } else {
+        Ok(())
     }
 }
 
@@ -75,15 +95,6 @@ pub fn gen_scope_toplevel(
                     params,
                     block,
                 } => {
-                    scope.entities.borrow_mut().insert(
-                        name.clone(),
-                        Entity::Function {
-                            return_type: _type.clone(),
-                            is_static: *is_static,
-                            params: params.clone(),
-                        },
-                    );
-
                     if recursive {
                         let local = gen_scope_stmts(
                             block,
@@ -91,6 +102,45 @@ pub fn gen_scope_toplevel(
                             Rc::downgrade(&scope),
                         )?;
                         (*scope.localscope.borrow_mut()).push(local);
+                    } else {
+                        contain(&scope, name)?;
+                        get_type_ref(&scope, _type)?;
+                        scope.entities.borrow_mut().insert(
+                            name.clone(),
+                            Entity::Function {
+                                return_type: _type.clone(),
+                                is_static: *is_static,
+                                params: params.clone(),
+                            },
+                        );
+                    }
+                }
+                DefNode::Struct { name, member_list } => {
+                    if !recursive {
+                        contain(&scope, name)?;
+                        for Member { _type, name: _ } in member_list.iter_mut() {
+                            get_type_ref(&scope, _type)?;
+                        }
+                        scope.entities.borrow_mut().insert(
+                            name.clone(),
+                            Entity::Struct {
+                                member_list: member_list.clone(),
+                            },
+                        );
+                    }
+                }
+                DefNode::Union { name, member_list } => {
+                    if !recursive {
+                        contain(&scope, name)?;
+                        for Member { _type, name: _ } in member_list.iter_mut() {
+                            get_type_ref(&scope, _type)?;
+                        }
+                        scope.entities.borrow_mut().insert(
+                            name.clone(),
+                            Entity::Union {
+                                member_list: member_list.clone(),
+                            },
+                        );
                     }
                 }
                 _ => todo!(),
@@ -99,6 +149,31 @@ pub fn gen_scope_toplevel(
         }
     }
     Ok(scope)
+}
+
+pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), ResolverError> {
+    match &mut type_node.base {
+        TypeBaseNode::Struct(name, entity) => {
+            if let Some(e) = get_ref(&scope, &name, EntityType::Struct) {
+                *entity = Some(Box::new(e));
+            } else {
+                Err(ResolverError {
+                    message: format!("struct {} is not defined", name),
+                })?;
+            }
+        }
+        TypeBaseNode::Union(name, entity) => {
+            if let Some(e) = get_ref(&scope, &name, EntityType::Union) {
+                *entity = Some(Box::new(e));
+            } else {
+                Err(ResolverError {
+                    message: format!("union {} is not defined", name),
+                })?;
+            }
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 pub fn get_ref(scope: &Rc<Scope>, name: &str, entity_type: EntityType) -> Option<Entity> {
@@ -203,17 +278,23 @@ pub fn resolve_suffixop(
 ) -> Result<(), ResolverError> {
     match suffix {
         SuffixOp::None => Ok(()),
-        SuffixOp::CallFu(args, suffix) => {
+        SuffixOp::CallFu(args, s, entity) => {
             for arg in args {
                 get_variables_expr(arg, scope)?;
             }
-            resolve_suffixop(primary, suffix, scope)
+            if let PrimaryNode::Identifier(name, _) = primary {
+                if let Some(e) = get_ref(scope, name, EntityType::Function) {
+                    *entity = Some(e);
+                }
+            }
+            resolve_suffixop(primary, s, scope)
         }
         SuffixOp::Array(idx, suffix) => {
             get_variables_expr(idx, scope)?;
             resolve_suffixop(primary, suffix, scope)
         }
-        _ => todo!(),
+        SuffixOp::Dot(_, suffix) => resolve_suffixop(primary, suffix, scope),
+        e => panic!("{:?}", e),
     }
 }
 
@@ -242,6 +323,7 @@ pub fn apply_vars(vars: &mut DefVars, scope: &Rc<Scope>) -> Result<(), ResolverE
         match var {
             Var::Init { name, expr } => {
                 get_variables_expr(expr, scope)?;
+                get_type_ref(scope, &mut vars._type)?;
                 scope.entities.borrow_mut().insert(
                     name.clone(),
                     Entity::Variable {
@@ -252,6 +334,7 @@ pub fn apply_vars(vars: &mut DefVars, scope: &Rc<Scope>) -> Result<(), ResolverE
                 );
             }
             Var::Uninit { name } => {
+                get_type_ref(scope, &mut vars._type)?;
                 scope.entities.borrow_mut().insert(
                     name.clone(),
                     Entity::Variable {
@@ -301,12 +384,13 @@ fn test_scope_fun() {
             return 1;
         }
         void main(void) {
-            int a = d();
+            int a = d[0]();
         }"#,
     )
     .unwrap();
     let scope = Rc::new(Scope::default());
     let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true);
+    println!("{:#?}", nodes);
     assert!(scope_tree.is_ok());
 }
 
@@ -339,4 +423,38 @@ fn test_scope_top() {
     assert!(scope_tree.entities.borrow().get("a").is_some());
     assert!(scope_tree.entities.borrow().get("b").is_some());
     assert!(scope_tree.entities.borrow().get("c").is_some());
+}
+
+#[test]
+fn test_scope_struct_union() {
+    let mut nodes = crate::node::parse(
+        r#"
+        struct A {
+            long a;
+            int b;
+        }
+
+        union B {
+            int a;
+            unsigned long b;
+        }
+
+        void main(void) {
+            struct A a;
+            a.a = 1;
+            a.b = 2;
+
+            union B b;
+            b.a = 2;
+            b.b = 3;
+        }
+        "#,
+    )
+    .unwrap();
+    let scope =
+        gen_scope_toplevel(&mut nodes, Rc::new(Scope::default()), Weak::new(), false).unwrap();
+
+    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+    assert!(scope_tree.entities.borrow().get("A").is_some());
+    assert!(scope_tree.entities.borrow().get("B").is_some());
 }

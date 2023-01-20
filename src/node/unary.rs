@@ -1,4 +1,5 @@
 use super::*;
+use crate::resolve::variable_scope::Entity;
 use crate::Rule;
 use pest::iterators::{Pair, Pairs};
 use std::iter::Peekable;
@@ -27,7 +28,7 @@ pub enum SuffixOp {
     Dot(String, Box<SuffixOp>),
     Arrow(String, Box<SuffixOp>),
     Array(ExprNode, Box<SuffixOp>),
-    CallFu(Vec<ExprNode>, Box<SuffixOp>),
+    CallFu(Vec<ExprNode>, Box<SuffixOp>, Option<Entity>),
 }
 
 pub fn parse_unary_node(pair: Pair<Rule>) -> Result<UnaryNode, NodeError> {
@@ -75,7 +76,7 @@ fn suffix_op(mut pairs: Peekable<Pairs<Rule>>) -> Result<Box<SuffixOp>, NodeErro
                 if args.as_rule() != Rule::RPT {
                     pairs.next();
                 }
-                SuffixOp::CallFu(parse_args(args)?, suffix_op(pairs)?)
+                SuffixOp::CallFu(parse_args(args)?, suffix_op(pairs)?, None)
             }
             e => panic!("{:?}", e),
         }

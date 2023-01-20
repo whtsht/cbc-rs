@@ -54,8 +54,8 @@ pub enum DefNode {
 
 #[derive(Debug, Clone)]
 pub struct Member {
-    _type: TypeNode,
-    name: String,
+    pub _type: TypeNode,
+    pub name: String,
 }
 
 pub fn parse_member_list(pair: Pair<Rule>) -> Result<Vec<Member>, NodeError> {

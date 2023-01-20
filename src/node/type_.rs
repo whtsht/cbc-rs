@@ -2,6 +2,7 @@ use super::{
     param::{parse_params_node, ParamsNode},
     *,
 };
+use crate::resolve::variable_scope::Entity;
 use crate::Rule;
 use pest::iterators::Pair;
 
@@ -16,15 +17,15 @@ pub enum TypeBaseNode {
     UnsignedShort,
     UnsignedInt,
     UnsignedLong,
-    Struct(String),
-    Union(String),
-    Identifier(String),
+    Struct(String, Option<Box<Entity>>),
+    Union(String, Option<Box<Entity>>),
+    Identifier(String, Option<Box<Entity>>),
 }
 
 #[derive(Debug, Clone)]
 pub struct TypeNode {
-    base: TypeBaseNode,
-    suffixs: Vec<TypeSuffix>,
+    pub base: TypeBaseNode,
+    pub suffixs: Vec<TypeSuffix>,
 }
 
 #[derive(Debug, Clone)]
@@ -92,7 +93,11 @@ pub fn parse_typebase_node(pair: Pair<Rule>) -> Result<TypeBaseNode, NodeError> 
         }
         (Rule::STRUCT, Some(Rule::IDENTIFIER)) => {
             let ident = pairs.next().unwrap().as_str();
-            Ok(TypeBaseNode::Struct(ident.into()))
+            Ok(TypeBaseNode::Struct(ident.into(), None))
+        }
+        (Rule::UNION, Some(Rule::IDENTIFIER)) => {
+            let ident = pairs.next().unwrap().as_str();
+            Ok(TypeBaseNode::Union(ident.into(), None))
         }
         err => Err(NodeError {
             _type: NodeErrorType::Type,
