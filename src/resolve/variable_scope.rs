@@ -15,7 +15,7 @@ use std::rc::{Rc, Weak};
 
 #[derive(Debug)]
 pub struct ResolverError {
-    message: String,
+    pub message: String,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -106,7 +106,7 @@ pub fn gen_scope_toplevel(
                             Rc::new(Scope::default()),
                             Rc::downgrade(&scope),
                         )?;
-                        (*scope.localscope.borrow_mut()).push(local);
+                        scope.localscope.borrow_mut().push(local);
                     } else {
                         contain(&scope, name)?;
                         scope.entities.borrow_mut().insert(
@@ -173,7 +173,7 @@ pub fn gen_scope_toplevel(
 pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), ResolverError> {
     match &mut type_node.base {
         TypeBaseNode::Struct(name, entity) => {
-            if let Some(e) = get_ref(&scope, &name, EntityType::Struct) {
+            if let Some(e) = get_ref(&scope, &name) {
                 *entity = Some(Box::new(e));
             } else {
                 Err(ResolverError {
@@ -182,7 +182,7 @@ pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), R
             }
         }
         TypeBaseNode::Union(name, entity) => {
-            if let Some(e) = get_ref(&scope, &name, EntityType::Union) {
+            if let Some(e) = get_ref(&scope, &name) {
                 *entity = Some(Box::new(e));
             } else {
                 Err(ResolverError {
@@ -191,7 +191,7 @@ pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), R
             }
         }
         TypeBaseNode::Identifier(name, entity) => {
-            if let Some(e) = get_ref(&scope, &name, EntityType::TypeDef) {
+            if let Some(e) = get_ref(&scope, &name) {
                 *entity = Some(Box::new(e));
             } else {
                 Err(ResolverError {
@@ -204,12 +204,12 @@ pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), R
     Ok(())
 }
 
-pub fn get_ref(scope: &Rc<Scope>, name: &str, entity_type: EntityType) -> Option<Entity> {
+pub fn get_ref(scope: &Rc<Scope>, name: &str) -> Option<Entity> {
     match scope.entities.borrow().get(name) {
-        Some(e) if e.get_type() == entity_type => Some(e.clone()),
-        Some(_) | None => {
+        Some(e) => Some(e.clone()),
+        None => {
             if let Some(parent) = scope.parent.borrow().upgrade() {
-                get_ref(&parent, name, entity_type)
+                get_ref(&parent, name)
             } else {
                 None
             }
@@ -305,13 +305,13 @@ pub fn resolve_suffixop(
     scope: &Rc<Scope>,
 ) -> Result<(), ResolverError> {
     match suffix {
-        SuffixOp::None => Ok(()),
+        SuffixOp::SuffixNone => Ok(()),
         SuffixOp::CallFu(args, s, entity) => {
             for arg in args {
                 get_variables_expr(arg, scope)?;
             }
             if let PrimaryNode::Identifier(name, _) = primary {
-                if let Some(e) = get_ref(scope, name, EntityType::Function) {
+                if let Some(e) = get_ref(scope, name) {
                     *entity = Some(e);
                 }
             }
@@ -332,7 +332,7 @@ pub fn get_variables_primary(
 ) -> Result<(), ResolverError> {
     match primary {
         PrimaryNode::Identifier(name, _) => {
-            if let Some(entity) = get_ref(scope, name, EntityType::Variable) {
+            if let Some(entity) = get_ref(scope, name) {
                 *primary = PrimaryNode::Identifier(name.clone(), Some(entity));
             } else {
                 Err(ResolverError {

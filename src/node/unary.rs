@@ -22,7 +22,7 @@ pub enum UnaryNode {
 
 #[derive(Debug, Clone)]
 pub enum SuffixOp {
-    None,
+    SuffixNone,
     Increment(Box<SuffixOp>),
     Decrement(Box<SuffixOp>),
     Dot(String, Box<SuffixOp>),
@@ -81,7 +81,7 @@ fn suffix_op(mut pairs: Peekable<Pairs<Rule>>) -> Result<Box<SuffixOp>, NodeErro
             e => panic!("{:?}", e),
         }
     } else {
-        SuffixOp::None
+        SuffixOp::SuffixNone
     };
 
     Ok(Box::new(op))
