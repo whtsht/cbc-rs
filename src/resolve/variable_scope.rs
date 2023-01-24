@@ -109,7 +109,6 @@ pub fn gen_scope_toplevel(
                         (*scope.localscope.borrow_mut()).push(local);
                     } else {
                         contain(&scope, name)?;
-                        get_type_ref(&scope, _type)?;
                         scope.entities.borrow_mut().insert(
                             name.clone(),
                             Entity::Function {
@@ -123,41 +122,44 @@ pub fn gen_scope_toplevel(
                 DefNode::Struct { name, member_list } => {
                     if !recursive {
                         contain(&scope, name)?;
-                        for Member { _type, name: _ } in member_list.iter_mut() {
-                            get_type_ref(&scope, _type)?;
-                        }
                         scope.entities.borrow_mut().insert(
                             name.clone(),
                             Entity::Struct {
                                 member_list: member_list.clone(),
                             },
                         );
+                    } else {
+                        for Member { _type, name: _ } in member_list.iter_mut() {
+                            get_type_ref(&scope, _type)?;
+                        }
                     }
                 }
                 DefNode::Union { name, member_list } => {
                     if !recursive {
                         contain(&scope, name)?;
-                        for Member { _type, name: _ } in member_list.iter_mut() {
-                            get_type_ref(&scope, _type)?;
-                        }
                         scope.entities.borrow_mut().insert(
                             name.clone(),
                             Entity::Union {
                                 member_list: member_list.clone(),
                             },
                         );
+                    } else {
+                        for Member { _type, name: _ } in member_list.iter_mut() {
+                            get_type_ref(&scope, _type)?;
+                        }
                     }
                 }
                 DefNode::Type { _type, ident } => {
                     if !recursive {
                         contain(&scope, &ident)?;
-
                         scope.entities.borrow_mut().insert(
                             ident.clone(),
                             Entity::TypeDef {
                                 _type: _type.clone(),
                             },
                         );
+                    } else {
+                        get_type_ref(&scope, _type)?;
                     }
                 }
                 _ => todo!(),
@@ -169,7 +171,6 @@ pub fn gen_scope_toplevel(
 }
 
 pub fn get_type_ref(scope: &Rc<Scope>, type_node: &mut TypeNode) -> Result<(), ResolverError> {
-    println!("{:?}", type_node);
     match &mut type_node.base {
         TypeBaseNode::Struct(name, entity) => {
             if let Some(e) = get_ref(&scope, &name, EntityType::Struct) {

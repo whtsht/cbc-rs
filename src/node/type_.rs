@@ -66,7 +66,6 @@ pub fn parse_type_node(pair: Pair<Rule>) -> Result<TypeNode, NodeError> {
 }
 
 pub fn parse_typebase_node(pair: Pair<Rule>) -> Result<TypeBaseNode, NodeError> {
-    println!("{:?}", pair);
     let mut pairs = pair.into_inner().peekable();
     match pairs.peek().unwrap().as_rule() {
         Rule::VOID => Ok(TypeBaseNode::Void),
