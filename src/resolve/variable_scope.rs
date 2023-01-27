@@ -93,28 +93,24 @@ pub fn gen_scope_toplevel(
         match node {
             Node::Def(def_node) => match def_node.as_mut() {
                 DefNode::Vars(vars) => apply_vars(vars, &scope)?,
-                DefNode::Fun {
-                    is_static,
-                    _type,
-                    name,
-                    params,
-                    block,
-                } => {
+                DefNode::Fun(fun) => {
                     if recursive {
                         let local = gen_scope_stmts(
-                            block,
+                            &mut fun.block,
                             Rc::new(Scope::default()),
                             Rc::downgrade(&scope),
                         )?;
-                        scope.localscope.borrow_mut().push(local);
+
+                        scope.localscope.borrow_mut().push(local.clone());
+                        fun.scope = Some(local);
                     } else {
-                        contain(&scope, name)?;
+                        contain(&scope, &fun.name)?;
                         scope.entities.borrow_mut().insert(
-                            name.clone(),
+                            fun.name.clone(),
                             Entity::Function {
-                                return_type: _type.clone(),
-                                is_static: *is_static,
-                                params: params.clone(),
+                                return_type: fun._type.clone(),
+                                is_static: fun.is_static,
+                                params: fun.params.clone(),
                             },
                         );
                     }
@@ -227,18 +223,43 @@ pub fn gen_scope_stmts(
     }
 
     for node in nodes {
-        match node {
-            StmtNode::DefVars(vars) => apply_vars(vars, &scope)?,
-            StmtNode::Expr(expr) => {
+        gen_scope_stmt(node, Rc::new(Scope::default()), Rc::downgrade(&scope))?;
+    }
+    Ok(scope)
+}
+
+pub fn gen_scope_stmt(
+    node: &mut StmtNode,
+    scope: Rc<Scope>,
+    parent: Weak<Scope>,
+) -> Result<Rc<Scope>, ResolverError> {
+    if parent.upgrade().is_some() {
+        *scope.parent.borrow_mut() = parent;
+    }
+
+    match node {
+        StmtNode::DefVars(vars) => apply_vars(vars, &scope)?,
+        StmtNode::Expr(expr) => {
+            get_variables_expr(expr, &scope)?;
+        }
+        StmtNode::Return { expr } => {
+            if let Some(expr) = expr {
                 get_variables_expr(expr, &scope)?;
             }
-            StmtNode::Return { expr } => {
-                if let Some(expr) = expr {
-                    get_variables_expr(expr, &scope)?;
-                }
-            }
-            e => panic!("{:#?}", e),
         }
+        StmtNode::If { cond, then, _else } => {
+            get_variables_expr(cond, &scope)?;
+            gen_scope_stmt(then, Rc::new(Scope::default()), Rc::downgrade(&scope))?;
+            gen_scope_stmt(_else, Rc::new(Scope::default()), Rc::downgrade(&scope))?;
+        }
+        StmtNode::Block { stmts } => {
+            gen_scope_stmts(stmts, Rc::new(Scope::default()), Rc::downgrade(&scope))?;
+        }
+        StmtNode::While { cond, stmt } => {
+            get_variables_expr(cond, &scope)?;
+            gen_scope_stmt(stmt, Rc::new(Scope::default()), Rc::downgrade(&scope))?;
+        }
+        e => panic!("{:#?}", e),
     }
     Ok(scope)
 }

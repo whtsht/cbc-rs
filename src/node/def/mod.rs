@@ -1,6 +1,6 @@
 use self::{
     def_const::def_const,
-    def_fun::def_fun,
+    def_fun::{def_fun, DefFun},
     def_struct::def_struct,
     def_type::def_type,
     def_union::def_union,
@@ -8,31 +8,23 @@ use self::{
 };
 use super::{
     expr::ExprNode,
-    param::ParamsNode,
-    stmt::StmtNode,
     type_::{parse_type_node, TypeNode},
     Node, NodeError,
 };
 use crate::Rule;
 use pest::iterators::Pair;
 
-mod def_const;
-mod def_fun;
-mod def_struct;
-mod def_type;
-mod def_union;
+pub mod def_const;
+pub mod def_fun;
+pub mod def_struct;
+pub mod def_type;
+pub mod def_union;
 pub mod def_var;
 
 #[derive(Debug, Clone)]
 pub enum DefNode {
     Vars(DefVars),
-    Fun {
-        is_static: bool,
-        _type: TypeNode,
-        name: String,
-        params: ParamsNode,
-        block: Vec<StmtNode>,
-    },
+    Fun(DefFun),
     Const {
         _type: TypeNode,
         name: String,

@@ -1,3 +1,4 @@
+use crate::node::def::def_fun::DefFun;
 use crate::node::def::def_var::Var;
 use crate::node::unary::SuffixOp;
 use crate::node::{def::DefNode, stmt::StmtNode, Node};
@@ -9,7 +10,7 @@ pub fn dereference_check(nodes: &Vec<Node>) -> Result<(), ResolverError> {
     for node in nodes {
         match node {
             Node::Def(def) => match def.as_ref() {
-                DefNode::Fun { block, .. } => {
+                DefNode::Fun(DefFun { block, .. }) => {
                     for stmt in block {
                         match stmt {
                             StmtNode::Expr(expr) => {
