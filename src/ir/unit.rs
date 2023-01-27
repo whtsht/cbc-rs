@@ -12,16 +12,30 @@ use crate::node::{expr::ExprNode, stmt::StmtNode};
 use super::Op;
 use super::{Expr, Label, Stmt};
 
-pub fn address_of() {}
+pub fn address_of(expr: Expr) -> Expr {
+    match expr {
+        Expr::Var(name, entity) => Expr::Addr(name, entity),
+        Expr::Mem(expr) => *expr,
+        e => panic!("{:?} is not have a address", e),
+    }
+}
 
 pub fn transform_expr(expr: &ExprNode) -> Result<Expr, GenError> {
     match expr {
         ExprNode::Term(term) => transform_term(term),
         ExprNode::BinaryOp { op, lhs, rhs } => transform_binaryop(op, lhs.as_ref(), rhs.as_ref()),
+        ExprNode::Assign { term, expr } => transform_assign(term, &expr),
         _ => Err(GenError {
             message: format!("{:?} is not a constant value", expr),
         }),
     }
+}
+
+pub fn transform_assign(term: &TermNode, expr: &ExprNode) -> Result<Expr, GenError> {
+    Ok(Expr::Assign(
+        Box::new(address_of(transform_term(term)?)),
+        Box::new(transform_expr(expr)?),
+    ))
 }
 
 pub fn transform_binaryop(op: &BinaryOp, lhs: &ExprNode, rhs: &ExprNode) -> Result<Expr, GenError> {

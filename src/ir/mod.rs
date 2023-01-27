@@ -51,7 +51,6 @@ pub enum Stmt {
         else_label: Label,
     },
     Switch,
-    Assign,
     Label(Label),
     ExprStmt(Expr),
 }
@@ -66,9 +65,10 @@ pub enum Const {
 pub enum Expr {
     Uni(Op, Box<Expr>),
     Bin(Op, Box<Expr>, Box<Expr>),
+    Assign(Box<Expr>, Box<Expr>),
     Call,
-    Addr,
-    Mem,
+    Addr(String, Entity),
+    Mem(Box<Expr>),
     Var(String, Entity),
     Const(Const),
 }
@@ -231,11 +231,29 @@ fn test_gen_ir() {
             while (1) {
 
             }
+            a = 2;
             if (a) {
                 return 1 + 2;
             } else {
                 return a + 2;
             }
+        }
+           "#,
+    )
+    .unwrap();
+
+    let scope = Rc::new(Scope::default());
+    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+
+    let ir = gen_ir(nodes, scope_tree);
+    println!("{:#?}", ir);
+
+    let mut nodes = crate::node::parse(
+        r#"
+        int a = 0;
+        int main(void) {
+            a = 2;
+            return a;
         }
            "#,
     )
