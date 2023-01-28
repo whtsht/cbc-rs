@@ -2,6 +2,7 @@
 
 pub mod def;
 pub mod expr;
+pub mod extern_;
 pub mod import;
 pub mod param;
 pub mod primary;
@@ -14,6 +15,8 @@ pub mod unary;
 use self::def::parse_topdef_node;
 use self::def::DefNode;
 use self::expr::*;
+use self::extern_::parse_prototypefun;
+use self::extern_::PrototypeFun;
 use self::import::parse_import_node;
 use self::import::ImportNode;
 use self::primary::*;
@@ -68,6 +71,7 @@ pub const DDDOT: &str = "...";
 pub enum Node {
     Def(Box<DefNode>),
     Import(Box<ImportNode>),
+    Extern(Box<PrototypeFun>),
 }
 
 #[derive(Debug)]
@@ -108,6 +112,7 @@ pub fn parse(src: &str) -> Result<Vec<Node>, NodeError> {
         match pair.as_rule() {
             Rule::IMPORT_STMT => nodes.push(parse_import_node(pair)?),
             Rule::TOP_DEF => nodes.push(parse_topdef_node(pair)?),
+            Rule::EXTERN_STMT => nodes.push(parse_prototypefun(&mut pair.into_inner())?),
             Rule::EOI => break,
             e => panic!("{:?}", e),
         }

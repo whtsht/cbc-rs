@@ -247,6 +247,7 @@ pub fn gen_ir(nodes: Vec<Node>) -> Result<IR, GenError> {
                 _ => todo!(),
             },
             Node::Import(_) => {}
+            Node::Extern(_) => {}
         }
     }
 
@@ -306,8 +307,8 @@ fn test_gen_ir() {
 
     let mut nodes = crate::node::parse(
         r#"
-        //extern int puts(char *str);
-        //extern int printf(char *fmt, ...);
+        extern int puts(char * str);
+        extern int printf(char * fmt, ...);
 
         void fizzbuzz(int n) {
             int count = 1;
@@ -342,5 +343,4 @@ fn test_gen_ir() {
 
     let ir = gen_ir(nodes);
     assert!(ir.is_ok());
-    println!("{:?}", ir.unwrap());
 }

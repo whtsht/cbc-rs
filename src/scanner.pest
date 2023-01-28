@@ -398,6 +398,10 @@ IMPORT_STMT = ${
     IMPORT ~ SP+ ~ IDENTIFIER ~ ("." ~ IDENTIFIER)* ~ ";"
 }
 
+EXTERN_STMT = {
+    EXTERN ~ PRO_FUNCTION
+}
+
 DEF_CONST = {
    CONST ~ TYPE ~ NAME ~ (EQ ~ EXPR)?
 }
@@ -406,6 +410,10 @@ STORAGE = { STATIC? }
 
 DEF_FUNCTION = {
     STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ BLOCK
+}
+
+PRO_FUNCTION = {
+    STORAGE ~ TYPEREF ~ NAME ~ "(" ~ PARAMS ~ ")" ~ ";"
 }
 
 TOP_DEF = {
@@ -418,7 +426,7 @@ TOP_DEF = {
 }
 
 TOP = _{
-    IMPORT_STMT | TOP_DEF
+    IMPORT_STMT | TOP_DEF | EXTERN_STMT
 }
 
 FILE = { SOI ~ TOP* ~ EOI }
