@@ -1,0 +1,24 @@
+import stdio;
+
+void fizzbuzz(int n) {
+    int count = 1;
+
+    while (count <= n) {
+        if (count % 5 == 0 && count % 3 == 0) {
+            puts("FizzBuzz");
+        } else if (count % 5 == 0) {
+            puts("Buzz");
+        } else if (count % 3 == 0) {
+            puts("Fizz");
+        } else {
+            printf("%d\n", count);
+        }
+
+        count += 1;
+    }
+}
+
+int main(void) {
+    fizzbuzz(15);
+    return 0;
+}

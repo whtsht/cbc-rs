@@ -95,16 +95,31 @@ pub fn gen_scope_toplevel(
                 DefNode::Vars(vars) => apply_vars(vars, &scope)?,
                 DefNode::Fun(fun) => {
                     if recursive {
-                        let local = gen_scope_stmts(
-                            &mut fun.block,
-                            Rc::new(Scope::default()),
-                            Rc::downgrade(&scope),
-                        )?;
+                        let local = Rc::new(Scope::default());
+
+                        match &fun.params {
+                            ParamsNode::Void => {}
+                            ParamsNode::Some { fixed, .. } => {
+                                for param in fixed.iter() {
+                                    local.entities.borrow_mut().insert(
+                                        param.name.clone(),
+                                        Entity::Variable {
+                                            _type: param._type.clone(),
+                                            is_static: false,
+                                            init: None,
+                                        },
+                                    );
+                                }
+                            }
+                        }
+
+                        let local = gen_scope_stmts(&mut fun.block, local, Rc::downgrade(&scope))?;
 
                         scope.localscope.borrow_mut().push(local.clone());
                         fun.scope = Some(local);
                     } else {
                         contain(&scope, &fun.name)?;
+
                         scope.entities.borrow_mut().insert(
                             fun.name.clone(),
                             Entity::Function {
@@ -160,7 +175,7 @@ pub fn gen_scope_toplevel(
                 }
                 _ => todo!(),
             },
-            e => panic!("{:#?}", e),
+            _ => {}
         }
     }
     Ok(scope)
@@ -223,7 +238,7 @@ pub fn gen_scope_stmts(
     }
 
     for node in nodes {
-        gen_scope_stmt(node, Rc::new(Scope::default()), Rc::downgrade(&scope))?;
+        gen_scope_stmt(node, scope.clone(), Weak::new())?;
     }
     Ok(scope)
 }
@@ -357,7 +372,7 @@ pub fn get_variables_primary(
                 *primary = PrimaryNode::Identifier(name.clone(), Some(entity));
             } else {
                 Err(ResolverError {
-                    message: format!("{} not defined", name),
+                    message: format!("{} is not defined", name),
                 })?;
             }
         }
@@ -430,16 +445,17 @@ fn test_scope_var() {
 fn test_scope_fun() {
     let mut nodes = crate::node::parse(
         r#"
-        int d(void) {
-            return 1;
+        int add(int a, int b) {
+            return a + b;
         }
         void main(void) {
-            int a = d[0]();
+            int a = add(2, 4);
         }"#,
     )
     .unwrap();
     let scope = Rc::new(Scope::default());
     let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true);
+    println!("{:#?}", scope_tree);
     assert!(scope_tree.is_ok());
 }
 

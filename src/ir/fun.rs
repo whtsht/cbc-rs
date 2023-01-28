@@ -1,16 +1,17 @@
 use crate::ir::DefinedFun;
 use crate::ir::GenError;
 use crate::node::def::def_fun::DefFun;
-use crate::resolve::variable_scope::Scope;
 
 use super::unit::transform_stmt;
 use super::IRInfo;
 
-pub fn gen_def_fun(fun: &DefFun, scope: &Scope, info: &mut IRInfo) -> Result<DefinedFun, GenError> {
+pub fn gen_def_fun(fun: &DefFun, info: &mut IRInfo) -> Result<DefinedFun, GenError> {
     let mut stmts = vec![];
 
+    info.push_scope(fun.scope.as_ref().unwrap().clone());
+
     for stmt in fun.block.iter() {
-        stmts.extend(transform_stmt(stmt, info, scope)?);
+        stmts.extend(transform_stmt(stmt, info)?);
     }
 
     Ok(DefinedFun {

@@ -10,8 +10,8 @@ pub enum ParamsNode {
 
 #[derive(Debug, Clone)]
 pub struct Param {
-    _type: TypeNode,
-    name: String,
+    pub _type: TypeNode,
+    pub name: String,
 }
 
 pub fn parse_param(pair: Pair<Rule>) -> Result<Param, NodeError> {

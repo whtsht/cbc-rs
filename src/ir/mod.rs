@@ -1,4 +1,7 @@
-use crate::resolve::variable_scope::{get_ref, Entity};
+use crate::{
+    node::type_::TypeBaseNode,
+    resolve::variable_scope::{get_ref, Entity},
+};
 use std::rc::Rc;
 
 pub mod fun;
@@ -39,7 +42,7 @@ pub struct IR {
     pub fun: Vec<DefinedFun>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Return(Option<Expr>),
     Jump {
@@ -53,20 +56,20 @@ pub enum Stmt {
     Switch,
     Label(Label),
     ExprStmt(Expr),
+    Assign(Expr, Expr),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Const {
     Int(i64),
     Str(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Uni(Op, Box<Expr>),
     Bin(Op, Box<Expr>, Box<Expr>),
-    Assign(Box<Expr>, Box<Expr>),
-    Call,
+    Call(String, Vec<Expr>, Entity),
     Addr(String, Entity),
     Mem(Box<Expr>),
     Var(String, Entity),
@@ -81,7 +84,7 @@ pub enum Type {
     I64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Op {
     Add,
     Sub,
@@ -135,6 +138,7 @@ impl LabelGenerator {
     }
 }
 
+#[derive(Debug)]
 pub struct TmpVarGenerator {
     counter: u32,
 }
@@ -156,24 +160,27 @@ impl TmpVarGenerator {
 
 #[derive(Debug)]
 pub struct IRInfo {
-    pub scope_stack: Vec<Scope>,
+    pub scope_stack: Vec<Rc<Scope>>,
     pub break_stack: Vec<Label>,
     pub continue_stack: Vec<Label>,
     pub label_gen: LabelGenerator,
+    pub tmpvargen: TmpVarGenerator,
 }
 
 impl IRInfo {
     pub fn new() -> Self {
-        let scope_stack: Vec<Scope> = vec![];
-        let break_stack: Vec<Label> = vec![];
-        let continue_stack: Vec<Label> = vec![];
+        let scope_stack = vec![];
+        let break_stack = vec![];
+        let continue_stack = vec![];
         let label_gen = LabelGenerator::new();
+        let tmpvargen = TmpVarGenerator::new();
 
         IRInfo {
             scope_stack,
             break_stack,
             continue_stack,
             label_gen,
+            tmpvargen,
         }
     }
 
@@ -197,9 +204,35 @@ impl IRInfo {
     pub fn pop_break(&mut self) -> Label {
         self.break_stack.pop().expect("break stack is empty")
     }
+
+    pub fn push_scope(&mut self, scope: Rc<Scope>) {
+        self.scope_stack.push(scope);
+    }
+
+    pub fn current_scope(&mut self) -> Rc<Scope> {
+        self.scope_stack.last().unwrap().clone()
+    }
+
+    pub fn pop_scope(&mut self) {
+        self.scope_stack.pop();
+    }
+
+    pub fn get_tmpvar(&mut self, scope: Rc<Scope>, base: TypeBaseNode) -> Expr {
+        Expr::Var(
+            self.tmpvargen.new_tmpvar(&scope),
+            Entity::Variable {
+                _type: TypeNode {
+                    base,
+                    suffixs: vec![],
+                },
+                is_static: false,
+                init: None,
+            },
+        )
+    }
 }
 
-pub fn gen_ir(nodes: Vec<Node>, scope: Rc<Scope>) -> Result<IR, GenError> {
+pub fn gen_ir(nodes: Vec<Node>) -> Result<IR, GenError> {
     let mut ir = IR {
         fun: vec![],
         var: vec![],
@@ -210,7 +243,7 @@ pub fn gen_ir(nodes: Vec<Node>, scope: Rc<Scope>) -> Result<IR, GenError> {
         match node {
             Node::Def(def) => match def.as_ref() {
                 DefNode::Vars(def_var) => ir.var.extend(gen_def_var(def_var)?),
-                DefNode::Fun(fun) => ir.fun.push(gen_def_fun(fun, scope.as_ref(), &mut info)?),
+                DefNode::Fun(fun) => ir.fun.push(gen_def_fun(fun, &mut info)?),
                 _ => todo!(),
             },
             Node::Import(_) => {}
@@ -242,26 +275,72 @@ fn test_gen_ir() {
     )
     .unwrap();
 
-    let scope = Rc::new(Scope::default());
-    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+    let scope =
+        gen_scope_toplevel(&mut nodes, Rc::new(Scope::default()), Weak::new(), false).unwrap();
 
-    let ir = gen_ir(nodes, scope_tree);
-    println!("{:#?}", ir);
+    gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+
+    let ir = gen_ir(nodes);
+    assert!(ir.is_ok());
 
     let mut nodes = crate::node::parse(
         r#"
-        int a = 0;
+        int add(int a, int b) {
+            return a + b;
+        }
         int main(void) {
-            a = 2;
-            return a;
+            int a = 1;
+            return add(a = 2, 2);
         }
            "#,
     )
     .unwrap();
 
-    let scope = Rc::new(Scope::default());
-    let scope_tree = gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+    let scope =
+        gen_scope_toplevel(&mut nodes, Rc::new(Scope::default()), Weak::new(), false).unwrap();
 
-    let ir = gen_ir(nodes, scope_tree);
-    println!("{:#?}", ir);
+    gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+
+    let ir = gen_ir(nodes);
+    assert!(ir.is_ok());
+
+    let mut nodes = crate::node::parse(
+        r#"
+        //extern int puts(char *str);
+        //extern int printf(char *fmt, ...);
+
+        void fizzbuzz(int n) {
+            int count = 1;
+
+            while (count <= n) {
+                if (count % 5 == 0 && count % 3 == 0) {
+                    // puts("FizzBuzz");
+                } else if (count % 5 == 0) {
+                    // puts("Buzz");
+                } else if (count % 3 == 0) {
+                    // puts("Fizz");
+                } else {
+                    // printf("%d\n", count);
+                }
+
+                count += 1;
+            }
+        }
+
+        int main(void) {
+            fizzbuzz(15);
+            return 0;
+        }
+           "#,
+    )
+    .unwrap();
+
+    let scope =
+        gen_scope_toplevel(&mut nodes, Rc::new(Scope::default()), Weak::new(), false).unwrap();
+
+    gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+
+    let ir = gen_ir(nodes);
+    assert!(ir.is_ok());
+    println!("{:?}", ir.unwrap());
 }

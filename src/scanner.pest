@@ -70,45 +70,45 @@ KEYWORD = _{
 
 // Punctuation
 
-PLUS      = { "+" }
-MINUS     = { "-" }
-STAR      = { "*" }
-SLASH     = { "/" }
-PERCENT   = { "%" }
-CARET     = { "^" }
-NOT       = { "!" }
-AND       = { "&" }
-OR        = { "|" }
-TILDE     = { "~" }
-AAND      = { "&&" }
-OOR       = { "||" }
-SHL       = { "<<" }
-SHR       = { ">>" }
-PLUSEQ    = { "+=" }
-MINUSEQ   = { "-=" }
-STAREQ    = { "*=" }
-SLASHEQ   = { "/=" }
-PERCENTEQ = { "%=" }
-CARETEQ   = { "^=" }
-ANDEQ     = { "&=" }
-OREQ      = { "|=" }
-SHLEQ     = { "<<=" }
-RHLEQ     = { ">>=" }
-EQ        = { "=" }
-EEQ       = { "==" }
-NE        = { "!=" }
-GT        = { ">" }
-LT        = { "<" }
-GE        = { ">=" }
-LE        = { "<=" }
-QUESTION  = { "?" }
-PPLUS     = { "++" }
-MMINUS    = { "--" }
-DOT       = { "." }
-DDDOT     = { "..." }
-ARROW     = { "->" }
-COLON     = { ":" }
-SCOLON    = { ";" }
+PLUS      = @{ "+" }
+MINUS     = @{ "-" }
+STAR      = @{ "*" }
+SLASH     = @{ "/" }
+PERCENT   = @{ "%" }
+CARET     = @{ "^" }
+NOT       = @{ "!" }
+AAND      = @{ "&&" }
+AND       = @{ !"&" ~ "&" }
+OR        = @{ "|" }
+TILDE     = @{ "~" }
+OOR       = @{ "||" }
+SHL       = @{ "<<" }
+SHR       = @{ ">>" }
+PLUSEQ    = @{ "+=" }
+MINUSEQ   = @{ "-=" }
+STAREQ    = @{ "*=" }
+SLASHEQ   = @{ "/=" }
+PERCENTEQ = @{ "%=" }
+CARETEQ   = @{ "^=" }
+ANDEQ     = @{ "&=" }
+OREQ      = @{ "|=" }
+SHLEQ     = @{ "<<=" }
+RHLEQ     = @{ ">>=" }
+EQ        = @{ "=" }
+EEQ       = @{ "==" }
+NE        = @{ "!=" }
+GT        = @{ ">" }
+LT        = @{ "<" }
+GE        = @{ ">=" }
+LE        = @{ "<=" }
+QUESTION  = @{ "?" }
+PPLUS     = @{ "++" }
+MMINUS    = @{ "--" }
+DOT       = @{ "." }
+DDDOT     = @{ "..." }
+ARROW     = @{ "->" }
+COLON     = @{ ":" }
+SCOLON    = @{ ";" }
 
 // Left Square brackets
 LSB       = { "[" }
@@ -204,7 +204,7 @@ PARAMS = {
 
 CHARACTER = { "'" ~ ASCII_ALPHA ~ "'" }
 
-STRING = { "\"" ~ ASCII_ALPHA* ~ "\""}
+STRING = { "\"" ~ (!"\"" ~ ANY)* ~ "\""}
 
 PRIMARY = {
       INTEGER

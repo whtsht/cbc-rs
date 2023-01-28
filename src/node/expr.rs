@@ -147,8 +147,8 @@ pub fn expr9(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::OOR => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Or,
-                    lhs: Box::new(expr9(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr9(pairs)?),
                 };
             }
             _ => todo!(),
@@ -166,8 +166,8 @@ pub fn expr8(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::AAND => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::And,
-                    lhs: Box::new(expr8(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr8(pairs)?),
                 };
             }
             _ => todo!(),
@@ -185,43 +185,43 @@ pub fn expr7(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::GE => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Ge,
-                    lhs: Box::new(expr7(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr7(pairs)?),
                 };
             }
             Rule::LE => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Le,
-                    lhs: Box::new(expr7(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr7(pairs)?),
                 };
             }
             Rule::GT => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Gt,
-                    lhs: Box::new(expr7(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr7(pairs)?),
                 };
             }
             Rule::LT => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Lt,
-                    lhs: Box::new(expr7(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr7(pairs)?),
                 };
             }
             Rule::EEQ => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Eq,
-                    lhs: Box::new(expr7(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr7(pairs)?),
                 };
             }
             Rule::NE => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Ne,
-                    lhs: Box::new(expr7(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr7(pairs)?),
                 };
             }
             _ => todo!(),
@@ -239,8 +239,8 @@ pub fn expr6(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::OR => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::BitOr,
-                    lhs: Box::new(expr6(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr6(pairs)?),
                 };
             }
             _ => todo!(),
@@ -258,8 +258,8 @@ pub fn expr5(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::CARET => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::BitExOr,
-                    lhs: Box::new(expr5(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr5(pairs)?),
                 };
             }
             _ => todo!(),
@@ -277,8 +277,8 @@ pub fn expr4(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::AND => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::BitAnd,
-                    lhs: Box::new(expr4(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr4(pairs)?),
                 };
             }
             _ => todo!(),
@@ -296,15 +296,15 @@ pub fn expr3(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::SHL => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Shl,
-                    lhs: Box::new(expr3(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr3(pairs)?),
                 };
             }
             Rule::SHR => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Shr,
-                    lhs: Box::new(expr3(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr3(pairs)?),
                 };
             }
             _ => todo!(),
@@ -322,15 +322,15 @@ pub fn expr2(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::PLUS => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Add,
-                    lhs: Box::new(expr2(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr2(pairs)?),
                 };
             }
             Rule::MINUS => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Sub,
-                    lhs: Box::new(expr2(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr2(pairs)?),
                 };
             }
             _ => todo!(),
@@ -348,22 +348,22 @@ pub fn expr1(mut pairs: Pairs<Rule>) -> Result<ExprNode, NodeError> {
             Rule::STAR => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Mul,
-                    lhs: Box::new(expr1(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr1(pairs)?),
                 };
             }
             Rule::SLASH => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Div,
-                    lhs: Box::new(expr1(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr1(pairs)?),
                 };
             }
             Rule::PERCENT => {
                 expr = ExprNode::BinaryOp {
                     op: BinaryOp::Mod,
-                    lhs: Box::new(expr1(pairs)?),
-                    rhs: Box::new(expr),
+                    lhs: Box::new(expr),
+                    rhs: Box::new(expr1(pairs)?),
                 };
             }
             _ => todo!(),
@@ -462,4 +462,21 @@ fn test_expr() {
             .unwrap()
     )
     .is_ok());
+
+    assert!(parse_expr_node(
+        CBCScanner::parse(Rule::EXPR, "count % 5 == 0 && count % 3 == 0")
+            .unwrap()
+            .next()
+            .unwrap()
+    )
+    .is_ok());
+    println!(
+        "{:#?}",
+        parse_expr_node(
+            CBCScanner::parse(Rule::EXPR, "count % 5 == 0 && count % 3 == 0")
+                .unwrap()
+                .next()
+                .unwrap()
+        )
+    );
 }

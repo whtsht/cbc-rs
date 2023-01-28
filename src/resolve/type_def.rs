@@ -171,7 +171,6 @@ fn test_recursive() {
         "#,
     )
     .unwrap();
-    println!("{:?}", nodes);
 
     let toplevel_scope =
         gen_scope_toplevel(&mut nodes, Rc::new(Scope::default()), Weak::new(), false).unwrap();
