@@ -9,3 +9,4 @@ pub struct CBCScanner;
 pub mod ir;
 pub mod node;
 pub mod resolve;
+pub mod gen;
