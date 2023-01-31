@@ -59,9 +59,9 @@ pub fn get_const_unary(unary: &UnaryNode) -> Result<Const, GenError> {
 
 pub fn get_const_primary(primary: &PrimaryNode) -> Result<Const, GenError> {
     match primary {
-        PrimaryNode::Char(c) => Ok(Const::Int(*c as i64)),
+        PrimaryNode::Char(c) => Ok(Const::Int(*c as i32)),
         PrimaryNode::String(s) => Ok(Const::Str(s.clone())),
-        PrimaryNode::Integer(i) => Ok(Const::Int(*i)),
+        PrimaryNode::Integer(i) => Ok(Const::Int(*i as i32)),
         PrimaryNode::Identifier(_, _) => Err(GenError {
             message: format!("{:?} is not a constant value", primary),
         }),

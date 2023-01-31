@@ -61,7 +61,7 @@ pub enum Stmt {
 
 #[derive(Debug, Clone)]
 pub enum Const {
-    Int(i64),
+    Int(i32),
     Str(String),
 }
 
@@ -292,6 +292,31 @@ fn test_gen_ir() {
         int main(void) {
             int a = 1;
             return add(a = 2, 2);
+        }
+           "#,
+    )
+    .unwrap();
+
+    let scope =
+        gen_scope_toplevel(&mut nodes, Rc::new(Scope::default()), Weak::new(), false).unwrap();
+
+    gen_scope_toplevel(&mut nodes, scope, Weak::new(), true).unwrap();
+
+    let ir = gen_ir(nodes);
+    assert!(ir.is_ok());
+
+    let mut nodes = crate::node::parse(
+        r#"
+        int fib(int n) {
+            if (n < 2) {
+                return n;
+            } else {
+                return fib(n - 1) + fib(n - 2);
+            }
+        }
+
+        int main(void) {
+            return fib(10);
         }
            "#,
     )

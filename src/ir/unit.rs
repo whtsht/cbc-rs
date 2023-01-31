@@ -186,9 +186,9 @@ pub fn transform_suffix(
 
 pub fn transform_primary(primary: &PrimaryNode) -> Result<Expr, GenError> {
     match primary {
-        PrimaryNode::Char(c) => Ok(Expr::Const(Const::Int(*c as i64))),
+        PrimaryNode::Char(c) => Ok(Expr::Const(Const::Int(*c as i32))),
         PrimaryNode::String(s) => Ok(Expr::Const(Const::Str(s.clone()))),
-        PrimaryNode::Integer(i) => Ok(Expr::Const(Const::Int(*i))),
+        PrimaryNode::Integer(i) => Ok(Expr::Const(Const::Int(*i as i32))),
         PrimaryNode::Identifier(name, entity) => {
             if let Some(entity) = entity {
                 Ok(Expr::Var(name.clone(), entity.clone()))
